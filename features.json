@@ -1,0 +1,13 @@
+{
+  "features": [
+    {
+      "id": "example-feature",
+      "name": "Example Feature",
+      "description": "A sample feature demonstrating the structure and layout for design prototypes.",
+      "status": "Sample",
+      "dateAdded": "2026-05-20",
+      "path": "features/example-feature/index.html",
+      "tags": ["example", "template"]
+    }
+  ]
+}
