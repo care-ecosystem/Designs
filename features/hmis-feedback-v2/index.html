@@ -28,8 +28,8 @@
 <!-- ═══ HELP MODAL ═══ -->
 <div class="modal-overlay" id="helpModal">
   <div class="modal-box">
-    <h3>Finding your Encounter ID</h3>
-    <p>Your Encounter ID is a unique code assigned to your hospital visit. You can find it in:</p>
+    <h3>Finding your PATIENT UHID</h3>
+    <p>Your PATIENT UHID is a unique code assigned to your hospital visit. You can find it in appointment slip</p>
     <div class="modal-step">
       <div class="modal-step-num">1</div>
       <div>Your <strong>discharge summary</strong> sheet — printed at the top right corner</div>
@@ -87,14 +87,14 @@
         <p>Enter your details below, or scan the QR code from your discharge summary to get started.</p>
 
         <div class="field">
-          <label class="field-label">Encounter ID <sup>*</sup></label>
+          <label class="field-label">PATIENT UHID <sup>*</sup></label>
           <div class="field-row">
             <input class="field-input" id="encounterInput" type="text"
               placeholder="e.g. 23a72471e17f448c…"
               oninput="clearErr('encounterErr','encounterInput')">
             <button class="qr-btn" title="Scan QR code" onclick="alert('QR scanner would activate here')">⊞</button>
           </div>
-          <div class="field-error" id="encounterErr">Please enter a valid Encounter ID (min. 8 characters)</div>
+          <div class="field-error" id="encounterErr">Please enter a valid PATIENT UHID(min. 8 characters)</div>
           <span class="help-link" onclick="openModal('helpModal')">🔍 &nbsp;Where do I find my Encounter ID?</span>
         </div>
 
