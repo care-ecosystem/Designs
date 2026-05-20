@@ -10,6 +10,15 @@
       "tags": ["ui"]
     },
     {
+      "id": "hmis-feedback-v2",
+      "name": "HMIS Patient Feedback v2",
+      "description": "To capture feedback from the Patient to improve the quality of health services",
+      "status": "Draft",
+      "dateAdded": "2026-05-20",
+      "path": "features/hmis-feedback-v2/index.html",
+      "tags": ["ui"]
+    },
+    {
       "id": "example-feature",
       "name": "Example Feature",
       "description": "A sample feature demonstrating the structure and layout for design prototypes.",

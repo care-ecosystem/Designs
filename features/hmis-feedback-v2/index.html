@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CARE Patient Feedback Kiosk</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+
+
+</head>
+<body>
+
+<!-- ═══ IDLE TIMEOUT OVERLAY ═══ -->
+<div class="idle-overlay" id="idleOverlay">
+  <div class="idle-box">
+    <div class="idle-icon">⏰</div>
+    <h2>Are you still there?</h2>
+    <p>Your session has been inactive. To protect your privacy, we'll reset the kiosk shortly.</p>
+    <div class="idle-cd" id="idleCd">30</div>
+    <div class="idle-btns">
+      <button class="idle-continue" onclick="dismissIdle()">I'm still here</button>
+      <button class="idle-reset"    onclick="restart()">Start over</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HELP MODAL ═══ -->
+<div class="modal-overlay" id="helpModal">
+  <div class="modal-box">
+    <h3>Finding your Encounter ID</h3>
+    <p>Your Encounter ID is a unique code assigned to your hospital visit. You can find it in:</p>
+    <div class="modal-step">
+      <div class="modal-step-num">1</div>
+      <div>Your <strong>discharge summary</strong> sheet — printed at the top right corner</div>
+    </div>
+    <div class="modal-step">
+      <div class="modal-step-num">2</div>
+      <div>The <strong>QR code sticker</strong> on your patient wristband</div>
+    </div>
+    <div class="modal-step">
+      <div class="modal-step-num">3</div>
+      <div>Any <strong>appointment confirmation</strong> SMS or email from the hospital</div>
+    </div>
+    <div class="modal-step" style="border-bottom:1px solid var(--border); padding-bottom:14px;">
+      <div class="modal-step-num">4</div>
+      <div>If you still can't find it, please <strong>ask our reception desk</strong> — we're happy to help</div>
+    </div>
+    <button class="modal-close" onclick="closeModal('helpModal')">Got it, close</button>
+  </div>
+</div>
+
+<!-- ═══ KIOSK SHELL ═══ -->
+<div class="kiosk">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand">
+      <div class="brand-logo">🏥</div>
+      <div>
+        <div class="brand-name">CARE Hospital</div>
+        <div class="brand-sub">Patient Feedback Kiosk</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-time" id="clock">--:--</div>
+      <div>Secure Session</div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════
+       SCREEN 1 · WELCOME + VERIFICATION
+  ══════════════════════════════════════ -->
+  <div class="screen active" id="s0">
+    <div class="card">
+
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-badge">🔒 &nbsp;Secure &amp; Private · Your data is protected</div>
+        <h1>Help Us Improve<br>Your Care</h1>
+        <p>Your honest feedback shapes the experience for every patient who walks through our doors. It takes less than 2 minutes.</p>
+      </div>
+
+      <!-- Verify form -->
+      <div class="vbody">
+        <h2>Patient Verification</h2>
+        <p>Enter your details below, or scan the QR code from your discharge summary to get started.</p>
+
+        <div class="field">
+          <label class="field-label">Encounter ID <sup>*</sup></label>
+          <div class="field-row">
+            <input class="field-input" id="encounterInput" type="text"
+              placeholder="e.g. 23a72471e17f448c…"
+              oninput="clearErr('encounterErr','encounterInput')">
+            <button class="qr-btn" title="Scan QR code" onclick="alert('QR scanner would activate here')">⊞</button>
+          </div>
+          <div class="field-error" id="encounterErr">Please enter a valid Encounter ID (min. 8 characters)</div>
+          <span class="help-link" onclick="openModal('helpModal')">🔍 &nbsp;Where do I find my Encounter ID?</span>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Birth Year <sup>*</sup></label>
+          <input class="field-input" id="birthInput" type="number"
+            placeholder="e.g. 1985" min="1900" max="2025" style="width:100%"
+            oninput="clearErr('birthErr','birthInput')">
+          <div class="field-error" id="birthErr">Please enter a valid birth year (e.g. 1985)</div>
+          <div class="field-hint">This is used only to verify your identity — never shared</div>
+        </div>
+
+        <div class="divider">or verify with phone number instead</div>
+
+        <div class="field">
+          <label class="field-label">Phone Number</label>
+          <input class="field-input" id="phoneInput" type="tel"
+            placeholder="e.g. 9876543210" style="width:100%"
+            oninput="clearErr('phoneErr','phoneInput')">
+          <div class="field-error" id="phoneErr">Please enter a valid 10-digit phone number</div>
+        </div>
+
+        <button class="btn btn-primary" id="verifyBtn" onclick="verifyAndContinue()">
+          Continue to Feedback &rarr;
+        </button>
+      </div>
+    </div>
+
+    <!-- Emoji quick-rate -->
+    <div class="emoji-section">
+      <div class="emoji-title">Or share a quick overall impression</div>
+      <div class="emoji-row" id="quickEmoji">
+        <button class="emoji-btn" onclick="selectEmoji(this,1)" title="Very Dissatisfied">😞</button>
+        <button class="emoji-btn" onclick="selectEmoji(this,2)" title="Dissatisfied">😕</button>
+        <button class="emoji-btn" onclick="selectEmoji(this,3)" title="Neutral">😐</button>
+        <button class="emoji-btn" onclick="selectEmoji(this,4)" title="Satisfied">😊</button>
+        <button class="emoji-btn" onclick="selectEmoji(this,5)" title="Very Satisfied">😄</button>
+      </div>
+      <div class="emoji-label-row">
+        <div class="emoji-label-item">Very<br>poor</div>
+        <div class="emoji-label-item">Below<br>average</div>
+        <div class="emoji-label-item">Average</div>
+        <div class="emoji-label-item">Good</div>
+        <div class="emoji-label-item">Excellent</div>
+      </div>
+      <div class="emoji-subtitle">Tap an emoji to submit a quick rating without the full form</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       SCREEN 2 · STEPPED FEEDBACK FORM
+  ══════════════════════════════════════ -->
+  <div class="screen" id="s1">
+    <div class="card">
+
+      <div class="form-header">
+        <div class="form-header-top">
+          <div>
+            <h2>Rate Your Experience</h2>
+            <p id="stepSubtitle">Step 1 of 5 — Rate each area, then add optional comments</p>
+          </div>
+          <div class="step-dots" id="stepDots"></div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill" style="width:20%"></div>
+        </div>
+      </div>
+
+      <div class="steps-wrap">
+
+        <!-- STEP 0 — Cleanliness -->
+        <div class="step-panel active" id="panel0">
+          <div class="step-hdr">
+            <div class="step-icon s0">🧹</div>
+            <div class="step-hdr-text">
+              <h3>Cleanliness</h3>
+              <p>Wards, bathrooms, common areas &amp; equipment</p>
+            </div>
+          </div>
+          <div class="stars-wrap">
+            <div class="stars-row" id="stars0"></div>
+            <div class="axis-labels"><span>Very poor</span><span>Average</span><span>Excellent</span></div>
+            <div class="rating-badge" id="badge0">✓ &nbsp;<span id="badgetxt0"></span></div>
+          </div>
+          <textarea class="step-comment" placeholder="Were the rooms and bathrooms clean? Any specific areas of concern? (optional)"></textarea>
+          <div class="step-nav">
+            <button class="btn-back" onclick="goStep(-1,0)">← Back</button>
+            <button class="btn btn-primary" onclick="goStep(1,0)">Next →</button>
+          </div>
+        </div>
+
+        <!-- STEP 1 — Staff Behaviour -->
+        <div class="step-panel" id="panel1">
+          <div class="step-hdr">
+            <div class="step-icon s1">👩‍⚕️</div>
+            <div class="step-hdr-text">
+              <h3>Staff Behaviour</h3>
+              <p>Doctors, nurses, support staff — courtesy &amp; professionalism</p>
+            </div>
+          </div>
+          <div class="stars-wrap">
+            <div class="stars-row" id="stars1"></div>
+            <div class="axis-labels"><span>Very poor</span><span>Average</span><span>Excellent</span></div>
+            <div class="rating-badge" id="badge1">✓ &nbsp;<span id="badgetxt1"></span></div>
+          </div>
+          <textarea class="step-comment" placeholder="How was your doctor's or nurse's manner? Any outstanding staff you'd like to mention? (optional)"></textarea>
+          <div class="step-nav">
+            <button class="btn-back" onclick="goStep(-1,1)">← Back</button>
+            <button class="btn btn-primary" onclick="goStep(1,1)">Next →</button>
+          </div>
+        </div>
+
+        <!-- STEP 2 — Wait Time -->
+        <div class="step-panel" id="panel2">
+          <div class="step-hdr">
+            <div class="step-icon s2">⏱️</div>
+            <div class="step-hdr-text">
+              <h3>Wait Time</h3>
+              <p>Time from arrival to being seen by a doctor</p>
+            </div>
+          </div>
+          <div class="stars-wrap">
+            <div class="stars-row" id="stars2"></div>
+            <div class="axis-labels"><span>Very long</span><span>Acceptable</span><span>Very fast</span></div>
+            <div class="rating-badge" id="badge2">✓ &nbsp;<span id="badgetxt2"></span></div>
+          </div>
+          <textarea class="step-comment" placeholder="How long did you wait? Was the wait time communicated to you? (optional)"></textarea>
+          <div class="step-nav">
+            <button class="btn-back" onclick="goStep(-1,2)">← Back</button>
+            <button class="btn btn-primary" onclick="goStep(1,2)">Next →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3 — Treatment Satisfaction -->
+        <div class="step-panel" id="panel3">
+          <div class="step-hdr">
+            <div class="step-icon s3">💊</div>
+            <div class="step-hdr-text">
+              <h3>Treatment Satisfaction</h3>
+              <p>Quality of diagnosis, treatment &amp; discharge process</p>
+            </div>
+          </div>
+          <div class="stars-wrap">
+            <div class="stars-row" id="stars3"></div>
+            <div class="axis-labels"><span>Very unsatisfied</span><span>Okay</span><span>Excellent</span></div>
+            <div class="rating-badge" id="badge3">✓ &nbsp;<span id="badgetxt3"></span></div>
+          </div>
+          <textarea class="step-comment" placeholder="Were your treatment options explained clearly? Did you feel listened to? (optional)"></textarea>
+          <div class="step-nav">
+            <button class="btn-back" onclick="goStep(-1,3)">← Back</button>
+            <button class="btn btn-primary" onclick="goStep(1,3)">Next →</button>
+          </div>
+        </div>
+
+        <!-- STEP 4 — Review & Submit -->
+        <div class="step-panel" id="panel4">
+          <div class="step-hdr">
+            <div class="step-icon" style="background:#E8F0FD;">📋</div>
+            <div class="step-hdr-text">
+              <h3>Review &amp; Submit</h3>
+              <p>Check your ratings and add any final comments</p>
+            </div>
+          </div>
+
+          <div class="alert" id="submitAlert">
+            <div class="alert-icon">⚠️</div>
+            <div id="alertMsg">Please rate all categories before submitting.</div>
+          </div>
+
+          <div class="summary-row" id="summaryRow"></div>
+
+          <div class="other-box">
+            <label>💬 Any other issues or suggestions?</label>
+            <textarea class="other-textarea" id="otherText" maxlength="500"
+              placeholder="Tell us anything else that could help us improve your experience…"
+              oninput="document.getElementById('charCount').textContent=this.value.length"></textarea>
+            <div class="char-count"><span id="charCount">0</span> / 500</div>
+          </div>
+
+          <div class="step-nav">
+            <button class="btn-back" onclick="goStep(-1,4)">← Back</button>
+            <button class="btn btn-primary" onclick="submitFeedback()" style="flex:1">
+              Submit Feedback ✓
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /steps-wrap -->
+    </div><!-- /card -->
+  </div><!-- /s1 -->
+
+  <!-- ══════════════════════════════════
+       SCREEN 3 · THANK YOU
+  ══════════════════════════════════════ -->
+  <div class="screen" id="s2">
+    <div class="card">
+      <div class="ty-card">
+        <div class="ty-icon">✓</div>
+        <h1>Thank You!</h1>
+        <p>Your feedback has been submitted and will help us deliver better, more compassionate care to every patient.</p>
+        <div class="ty-ratings" id="tyRatings"></div>
+        <div class="cd-ring">
+          <svg width="56" height="56" viewBox="0 0 56 56">
+            <circle class="ring-bg"   cx="28" cy="28" r="24"/>
+            <circle class="ring-fill" id="ringFill" cx="28" cy="28" r="24"/>
+          </svg>
+          <div class="cd-num" id="cdNum">15</div>
+        </div>
+        <div class="cd-label">Returning to start in <span id="cdSec">15</span>s</div>
+        <button class="btn-restart" onclick="restart()">Start New Feedback</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /kiosk -->
+
+<script>
+/* ─────────────────────────────────────
+   STATE
+───────────────────────────────────── */
+const CATEGORIES = [
+  { id:0, label:'Cleanliness'  },
+  { id:1, label:'Staff'        },
+  { id:2, label:'Wait Time'    },
+  { id:3, label:'Treatment'    },
+];
+const RATING_LABELS = ['','Very poor','Below average','Average','Good','Excellent'];
+const ratings       = [0,0,0,0];
+let   currentStep   = 0;
+let   emojiRating   = 0;
+let   idleTimer     = null;
+let   idleCdTimer   = null;
+let   resetTimer    = null;
+const IDLE_TIMEOUT  = 90000; // 90s inactivity → warning
+const IDLE_GRACE    = 30;    // 30s to respond
+
+/* ─────────────────────────────────────
+   CLOCK
+───────────────────────────────────── */
+function updateClock(){
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+updateClock(); setInterval(updateClock,30000);
+
+/* ─────────────────────────────────────
+   BUILD STAR TILES
+───────────────────────────────────── */
+function buildStars(){
+  [0,1,2,3].forEach(cat => {
+    const row = document.getElementById('stars'+cat);
+    row.innerHTML = '';
+    for(let v=1;v<=5;v++){
+      const t = document.createElement('div');
+      t.className = 'star-tile';
+      t.innerHTML = `<span class="star-glyph">★</span><span class="star-num">${v}</span>`;
+      t.onclick = ()=> rate(cat, v);
+      row.appendChild(t);
+    }
+  });
+}
+buildStars();
+
+/* ─────────────────────────────────────
+   STEP DOTS
+───────────────────────────────────── */
+function buildDots(){
+  const wrap = document.getElementById('stepDots');
+  wrap.innerHTML = '';
+  for(let i=0;i<5;i++){
+    const d = document.createElement('div');
+    d.className = 'step-dot' + (i===0?' active':'');
+    d.id = 'dot'+i;
+    d.textContent = i < 4 ? (i+1) : '✓';
+    wrap.appendChild(d);
+  }
+}
+buildDots();
+
+/* ─────────────────────────────────────
+   RATING
+───────────────────────────────────── */
+function rate(cat, val){
+  ratings[cat] = val;
+  const tiles = document.querySelectorAll('#stars'+cat+' .star-tile');
+  tiles.forEach((t,i) => t.classList.toggle('filled', i < val));
+  const badge = document.getElementById('badge'+cat);
+  document.getElementById('badgetxt'+cat).textContent = RATING_LABELS[val];
+  badge.classList.add('visible');
+  updateSummary();
+  resetIdleTimer();
+}
+
+/* ─────────────────────────────────────
+   STEP NAVIGATION
+───────────────────────────────────── */
+function goStep(dir, from){
+  if(dir === -1 && from === 0){ switchScreen(0); return; }
+  const to = from + dir;
+  if(to < 0 || to > 4) return;
+  document.getElementById('panel'+from).classList.remove('active');
+  document.getElementById('panel'+to).classList.add('active');
+  currentStep = to;
+  updateProgress();
+  updateSummary();
+  window.scrollTo({top:0,behavior:'smooth'});
+  resetIdleTimer();
+}
+
+function updateProgress(){
+  const pct = Math.round(((currentStep+1)/5)*100);
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('stepSubtitle').textContent =
+    'Step '+(currentStep+1)+' of 5 — '+(currentStep<4 ? 'Rate each area, then add optional comments' : 'Review your ratings and submit');
+  for(let i=0;i<5;i++){
+    const d = document.getElementById('dot'+i);
+    d.className = 'step-dot'+(i<currentStep?' done':(i===currentStep?' active':''));
+  }
+}
+
+/* ─────────────────────────────────────
+   SUMMARY PILLS (step 4)
+───────────────────────────────────── */
+function updateSummary(){
+  const row = document.getElementById('summaryRow');
+  row.innerHTML = CATEGORIES.map(c => {
+    const r = ratings[c.id];
+    const unrated = r===0;
+    return `<div class="summary-pill${unrated?' unrated':''}">
+      <strong>${r ? r+'/5' : 'Not rated'}</strong>
+      <span>${c.label}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ─────────────────────────────────────
+   VERIFY & CONTINUE
+───────────────────────────────────── */
+function verifyAndContinue(){
+  const enc   = document.getElementById('encounterInput').value.trim();
+  const birth = document.getElementById('birthInput').value.trim();
+  const phone = document.getElementById('phoneInput').value.trim();
+  let ok = true;
+
+  if(!enc || enc.length < 8){
+    showErr('encounterErr','encounterInput'); ok = false;
+  }
+  if(!birth && !phone){
+    showErr('birthErr','birthInput');
+    showErr('phoneErr','phoneInput'); ok = false;
+  }
+  if(birth && (isNaN(birth)||+birth<1900||+birth>2025)){
+    showErr('birthErr','birthInput'); ok = false;
+  }
+  if(phone && (!/^\d{10}$/.test(phone))){
+    showErr('phoneErr','phoneInput'); ok = false;
+  }
+  if(!ok) return;
+  switchScreen(1);
+}
+
+function showErr(errId, inputId){
+  document.getElementById(errId).style.display='block';
+  document.getElementById(inputId).classList.add('error');
+}
+function clearErr(errId, inputId){
+  document.getElementById(errId).style.display='none';
+  document.getElementById(inputId).classList.remove('error');
+}
+
+/* ─────────────────────────────────────
+   SUBMIT
+───────────────────────────────────── */
+function submitFeedback(){
+  const unrated = ratings.filter(r=>r===0);
+  const alert   = document.getElementById('submitAlert');
+  const msg     = document.getElementById('alertMsg');
+  if(unrated.length > 0){
+    const missing = CATEGORIES.filter((_,i)=>ratings[i]===0).map(c=>c.label).join(', ');
+    msg.textContent = 'Please rate: '+missing+' before submitting.';
+    alert.classList.add('visible');
+    updateSummary();
+    return;
+  }
+  alert.classList.remove('visible');
+  switchScreen(2);
+}
+
+/* ─────────────────────────────────────
+   SCREEN SWITCH
+───────────────────────────────────── */
+function switchScreen(idx){
+  document.querySelectorAll('.screen').forEach((s,i)=>s.classList.toggle('active',i===idx));
+  if(idx===2) startCountdown();
+  else         stopCountdown();
+  if(idx===1) resetIdleTimer();
+  else         clearIdleTimer();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ─────────────────────────────────────
+   EMOJI QUICK-RATE
+───────────────────────────────────── */
+function selectEmoji(el, val){
+  document.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  emojiRating = val;
+}
+
+/* ─────────────────────────────────────
+   IDLE TIMEOUT
+───────────────────────────────────── */
+function resetIdleTimer(){
+  clearIdleTimer();
+  idleTimer = setTimeout(()=>{
+    showIdleOverlay();
+  }, IDLE_TIMEOUT);
+}
+
+function clearIdleTimer(){
+  clearTimeout(idleTimer);
+  clearTimeout(idleCdTimer);
+  idleTimer = null;
+}
+
+function showIdleOverlay(){
+  const overlay = document.getElementById('idleOverlay');
+  overlay.classList.add('visible');
+  let sec = IDLE_GRACE;
+  document.getElementById('idleCd').textContent = sec;
+  clearInterval(idleCdTimer);
+  idleCdTimer = setInterval(()=>{
+    sec--;
+    document.getElementById('idleCd').textContent = sec;
+    if(sec<=0){ clearInterval(idleCdTimer); overlay.classList.remove('visible'); restart(); }
+  },1000);
+}
+
+function dismissIdle(){
+  document.getElementById('idleOverlay').classList.remove('visible');
+  clearInterval(idleCdTimer);
+  resetIdleTimer();
+}
+
+// Track all interactions
+['click','touchstart','keydown','mousemove'].forEach(ev=>{
+  document.addEventListener(ev, ()=>{
+    if(document.getElementById('s1').classList.contains('active')) resetIdleTimer();
+  }, {passive:true});
+});
+
+/* ─────────────────────────────────────
+   POST-SUBMIT COUNTDOWN
+───────────────────────────────────── */
+let cdInterval = null;
+function startCountdown(){
+  // Populate thank-you pills
+  const ty = document.getElementById('tyRatings');
+  ty.innerHTML = CATEGORIES.map(c=>`
+    <div class="ty-pill">
+      <strong>${ratings[c.id] ? ratings[c.id]+'/5' : '—'}</strong>
+      <span>${c.label}</span>
+    </div>`).join('');
+
+  let sec=15;
+  const numEl=document.getElementById('cdNum');
+  const secEl=document.getElementById('cdSec');
+  const ring =document.getElementById('ringFill');
+  numEl.textContent=sec; secEl.textContent=sec;
+  ring.style.strokeDashoffset=0;
+  stopCountdown();
+  cdInterval=setInterval(()=>{
+    sec--;
+    numEl.textContent=sec; secEl.textContent=sec;
+    ring.style.strokeDashoffset=151.6*(1-sec/15);
+    if(sec<=0){ stopCountdown(); restart(); }
+  },1000);
+}
+function stopCountdown(){ clearInterval(cdInterval); cdInterval=null; }
+
+/* ─────────────────────────────────────
+   RESTART
+───────────────────────────────────── */
+function restart(){
+  stopCountdown(); clearIdleTimer();
+  // reset ratings
+  [0,1,2,3].forEach(i=>{
+    ratings[i]=0;
+    document.querySelectorAll('#stars'+i+' .star-tile').forEach(t=>t.classList.remove('filled'));
+    document.getElementById('badge'+i).classList.remove('visible');
+  });
+  emojiRating=0;
+  document.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected'));
+  // reset form
+  document.getElementById('encounterInput').value='';
+  document.getElementById('birthInput').value='';
+  document.getElementById('phoneInput').value='';
+  document.getElementById('otherText').value='';
+  document.getElementById('charCount').textContent='0';
+  document.getElementById('submitAlert').classList.remove('visible');
+  // reset stepper
+  document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel0').classList.add('active');
+  currentStep=0;
+  updateProgress();
+  // reset errors
+  ['encounterErr','birthErr','phoneErr'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+  ['encounterInput','birthInput','phoneInput'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.remove('error');
+  });
+  switchScreen(0);
+}
+
+/* ─────────────────────────────────────
+   MODALS
+───────────────────────────────────── */
+function openModal(id){ document.getElementById(id).classList.add('visible'); }
+function closeModal(id){ document.getElementById(id).classList.remove('visible'); }
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('visible'); });
+});
+
+/* init summary */
+updateSummary();
+</script>
+</body>
+</html>
