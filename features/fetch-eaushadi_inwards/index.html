@@ -1,130 +1,708 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fetch eAushadi inwards - Care Designs</title>
-    <link rel="stylesheet" href="../../assets/css/main.css">
-    <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Inward Purchase Entries</title>
+<style>
+  :root {
+    --green-700: #0a6b3b;
+    --green-600: #0e7a44;
+    --green-500: #14924f;
+    --green-50:  #e8f3ed;
+    --green-100: #d4ead9;
+    --bg:        #f7f8fa;
+    --surface:   #ffffff;
+    --border:    #e5e7eb;
+    --border-strong: #d1d5db;
+    --text:      #111827;
+    --text-soft: #4b5563;
+    --text-muted:#6b7280;
+    --readonly-bg: #f3f4f6;
+    --shadow-sm: 0 1px 2px rgba(16,24,40,.04);
+    --shadow-md: 0 1px 3px rgba(16,24,40,.06), 0 1px 2px rgba(16,24,40,.04);
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ---------- App shell ---------- */
+  .app {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    min-height: 100vh;
+  }
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 0;
+    gap: 6px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+  .sidebar .nav-item {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .sidebar .nav-item:hover { background: var(--green-50); color: var(--green-700); }
+  .sidebar .nav-item.active { background: var(--green-50); color: var(--green-700); }
+  .sidebar .spacer { flex: 1; }
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: #fce4ec;
+    color: #b03060;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  .main { padding: 28px 32px 60px; }
+
+  /* ---------- Page header ---------- */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .page-title { font-size: 22px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
+  .header-actions { display: flex; gap: 10px; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-weight: 500;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background .15s, border .15s, color .15s, box-shadow .15s;
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn:hover { background: #f9fafb; }
+  .btn-primary {
+    background: var(--green-600);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--green-700); }
+  .btn .kbd {
+    background: rgba(255,255,255,.18);
+    color: #fff;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 4px;
+  }
+  .btn-secondary .kbd {
+    background: #eef0f3;
+    color: var(--text-soft);
+  }
+
+  /* ---------- Tabs ---------- */
+  .tabs {
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 18px;
+  }
+  .tab {
+    padding: 10px 0;
+    font-size: 14px;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    font-weight: 500;
+  }
+  .tab.active {
+    color: var(--green-700);
+    border-bottom-color: var(--green-600);
+    font-weight: 600;
+  }
+
+  /* ---------- Search ---------- */
+  .search {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    font-size: 13.5px;
+    color: var(--text);
+    margin-bottom: 14px;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .search:focus { border-color: var(--green-500); box-shadow: 0 0 0 3px rgba(20,146,79,.12); }
+  .search::placeholder { color: var(--text-muted); }
+
+  /* ---------- Table (list view) ---------- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  table.list {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  table.list th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    padding: 12px 16px;
+    background: #fafbfc;
+    border-bottom: 1px solid var(--border);
+  }
+  table.list td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13.5px;
+    vertical-align: middle;
+  }
+  table.list tr:last-child td { border-bottom: none; }
+  table.list tr:hover td { background: #fafbfc; }
+
+  .status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    color: var(--text-soft);
+    background: #fff;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: #fff;
+    font-size: 12.5px;
+    color: var(--text-soft);
+    cursor: pointer;
+  }
+  .chip:hover { background: #f9fafb; }
+  .created-by .name { font-weight: 500; color: var(--text); }
+  .created-by .meta { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+  .view-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 5px;
+    font-size: 12.5px;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .view-btn:hover { background: #f9fafb; }
+
+  /* ---------- Section divider between two screens ---------- */
+  .section-divider {
+    margin: 56px 0 28px;
+    padding-top: 28px;
+    border-top: 2px dashed var(--border);
+  }
+  .section-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  /* ---------- Delivery details table ---------- */
+  .delivery-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto;
+  }
+  table.delivery {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 980px;
+  }
+  table.delivery th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 12.5px;
+    color: var(--text-soft);
+    padding: 14px 14px;
+    background: #fafbfc;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  table.delivery td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  table.delivery tr:last-child td { border-bottom: none; }
+
+  /* Inputs */
+  .field {
+    width: 100%;
+    padding: 9px 11px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+    font-family: inherit;
+  }
+  .field:focus {
+    border-color: var(--green-500);
+    box-shadow: 0 0 0 3px rgba(20,146,79,.12);
+  }
+  .field[readonly], .field.readonly {
+    background: var(--readonly-bg);
+    color: var(--text-soft);
+    cursor: not-allowed;
+    border-color: var(--border);
+  }
+  .field[readonly]:focus, .field.readonly:focus {
+    box-shadow: none;
+    border-color: var(--border);
+  }
+  select.field {
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+  }
+
+  .product-cell { min-width: 220px; }
+  .eaushadi-info {
+    margin-top: 5px;
+    padding-left: 2px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+  .eaushadi-info .label {
+    color: #9ca3af;
+    font-weight: 500;
+  }
+  .eaushadi-info .name {
+    color: var(--text-soft);
+  }
+  .batch-cell  { min-width: 130px; }
+  .expiry-cell { min-width: 150px; }
+  .category-cell { min-width: 150px; }
+  .num-cell { min-width: 90px; max-width: 110px; }
+  .accepted-cell { min-width: 110px; }
+
+  .accepted-input {
+    border-color: #c8e0d3;
+    background: #f0faf4;
+  }
+  .accepted-input:focus {
+    border-color: var(--green-500);
+    background: #fff;
+  }
+
+  .icon-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color .15s, background .15s;
+  }
+  .icon-btn:hover { color: #b91c1c; background: #fef2f2; }
+
+  /* Footer actions of delivery table */
+  .delivery-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: #fafbfc;
+    border-top: 1px solid var(--border);
+  }
+  .footer-left { display: flex; gap: 10px; flex-wrap: wrap; }
+  .ghost-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 12.5px;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .ghost-btn:hover { background: #f9fafb; }
+
+  /* Table header group for Accepted Qty highlight */
+  th.accepted-head {
+    color: var(--green-700);
+    font-weight: 600;
+  }
+
+  /* Note */
+  .note {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding-left: 4px;
+  }
+
+  /* Icons sizing */
+  svg { display: block; }
+
+  @media (max-width: 900px) {
+    .main { padding: 20px 16px 40px; }
+    .page-title { font-size: 18px; }
+  }
+</style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <a href="../../index.html" class="back-button">← Back to Features</a>
-            <h1>Fetch eAushadi inwards</h1>
-            <p class="subtitle">This is a sample feature demonstrating the structure and layout</p>
-        </div>
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="nav-item" title="Home">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+    </div>
+    <div class="nav-item" title="Beds">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18v-7a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v7"></path><path d="M2 18h20"></path><circle cx="7" cy="12" r="2"></circle></svg>
+    </div>
+    <div class="nav-item" title="Lab">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6L4 20a2 2 0 0 0 1.8 3h12.4A2 2 0 0 0 20 20l-5-11V3"></path><line x1="7" y1="3" x2="17" y2="3"></line></svg>
+    </div>
+    <div class="nav-item" title="Locations">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+    </div>
+    <div class="nav-item active" title="Pharmacy">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-4.5A2 2 0 0 1 6.4 3h11.2a2 2 0 0 1 1.9 1.5L21 9"></path><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><line x1="12" y1="13" x2="12" y2="17"></line><line x1="10" y1="15" x2="14" y2="15"></line></svg>
+    </div>
+    <div class="nav-item" title="Inventory">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+    </div>
+    <div class="nav-item" title="Calendar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"></path></svg>
+    </div>
+    <div class="nav-item" title="Reports">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+    </div>
+    <div class="spacer"></div>
+    <div class="avatar">FA</div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- ============ SCREEN 1: Inward Purchase Entries (unchanged) ============ -->
+    <div class="section-label">Screen 1 — List View</div>
+    <header class="page-header">
+      <h1 class="page-title">Inward Purchase Entries</h1>
+      <div class="header-actions">
+        <button class="btn btn-secondary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          Fetch from eAushadi <span class="kbd">C</span>
+        </button>
+        <button class="btn btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Create Delivery <span class="kbd">C</span>
+        </button>
+      </div>
     </header>
 
-    <main class="container">
-        <section class="feature-info">
-            <div class="info-banner">
-                <strong>Template Feature</strong>
-                <p>This is a template you can copy to create new feature designs. Replace this content with your actual feature design and functionality.</p>
-            </div>
-        </section>
+    <div class="tabs">
+      <div class="tab active">Created</div>
+      <div class="tab">Completed</div>
+    </div>
 
-        <section class="demo-section">
-            <h2>Feature Overview</h2>
-            <p>Describe what this feature does and its key benefits. Include context about the problem it solves.</p>
+    <input class="search" type="text" placeholder="Search by supplier" />
 
-            <div class="demo-container">
-                <h3>Interactive Demo</h3>
-                <div class="example-component">
-                    <p>This is where your feature UI would go. You can add:</p>
-                    <ul>
-                        <li>Form inputs and controls</li>
-                        <li>Interactive elements</li>
-                        <li>Data visualizations</li>
-                        <li>Custom components</li>
-                    </ul>
+    <div class="card">
+      <table class="list">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Supplier</th>
+            <th>Deliver To</th>
+            <th>Status</th>
+            <th>Tags</th>
+            <th>Created By</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>test</td>
+            <td>State Supplier</td>
+            <td>Pharmacy</td>
+            <td><span class="status-badge">Draft</span></td>
+            <td><span class="chip">🏷️ Add Tags</span></td>
+            <td class="created-by"><div class="name">Care Administrator</div><div class="meta">02:25 PM, 20/05/2026</div></td>
+            <td><button class="view-btn">👁 View Details</button></td>
+          </tr>
+          <tr>
+            <td>Fetch from eAushadi</td>
+            <td>State Supplier</td>
+            <td>Pharmacy</td>
+            <td><span class="status-badge">Draft</span></td>
+            <td><span class="chip">🏷️ Add Tags</span></td>
+            <td class="created-by"><div class="name">Facility Administrator</div><div class="meta">12:45 PM, 20/05/2026</div></td>
+            <td><button class="view-btn">👁 View Details</button></td>
+          </tr>
+          <tr>
+            <td>123</td>
+            <td>Test Supplier</td>
+            <td>Pharmacy</td>
+            <td><span class="status-badge">Draft</span></td>
+            <td><span class="chip">🏷️ Add Tags</span></td>
+            <td class="created-by"><div class="name">Care Administrator</div><div class="meta">07:43 PM, 19/05/2026</div></td>
+            <td><button class="view-btn">👁 View Details</button></td>
+          </tr>
+          <tr>
+            <td>Parcetamols</td>
+            <td>Test Supplier</td>
+            <td>Pharmacy</td>
+            <td><span class="status-badge">Draft</span></td>
+            <td><span class="chip">🏷️ Add Tags</span></td>
+            <td class="created-by"><div class="name">Care Administrator</div><div class="meta">12:01 PM, 30/04/2026</div></td>
+            <td><button class="view-btn">👁 View Details</button></td>
+          </tr>
+          <tr>
+            <td>Parcetamols</td>
+            <td>Test Supplier</td>
+            <td>Pharmacy</td>
+            <td><span class="status-badge">Draft</span></td>
+            <td><span class="chip">🏷️ Add Tags</span></td>
+            <td class="created-by"><div class="name">NHA User</div><div class="meta">11:59 AM, 30/04/2026</div></td>
+            <td><button class="view-btn">👁 View Details</button></td>
+          </tr>
+          <tr>
+            <td>Test</td>
+            <td>State Supplier</td>
+            <td>Pharmacy</td>
+            <td><span class="status-badge">Draft</span></td>
+            <td><span class="chip">🏷️ Add Tags</span></td>
+            <td class="created-by"><div class="name">Care Administrator</div><div class="meta">03:12 PM, 10/04/2026</div></td>
+            <td><button class="view-btn">👁 View Details</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-                    <div class="example-buttons">
-                        <button class="btn btn-primary" onclick="alert('This is an example interaction!')">Primary Action</button>
-                        <button class="btn btn-secondary" onclick="alert('This is a secondary action!')">Secondary Action</button>
-                    </div>
-                </div>
-            </div>
-        </section>
 
-        <section class="specifications">
-            <h2>Design Specifications</h2>
-            <div class="spec-grid">
-                <div class="spec-card">
-                    <h3>Colors</h3>
-                    <div class="color-palette">
-                        <div class="color-sample" style="background: var(--primary-color);">
-                            <span>Primary</span>
-                        </div>
-                        <div class="color-sample" style="background: var(--secondary-color);">
-                            <span>Secondary</span>
-                        </div>
-                        <div class="color-sample" style="background: var(--success);">
-                            <span>Success</span>
-                        </div>
-                    </div>
-                </div>
+    <!-- ============ SCREEN 2: Delivery Details (modified) ============ -->
+    <div class="section-divider">
+      <div class="section-label">Screen 2 — Delivery Details (Receive)</div>
+    </div>
 
-                <div class="spec-card">
-                    <h3>Typography</h3>
-                    <p style="font-size: 1.5rem; font-weight: 600;">Heading Style</p>
-                    <p style="font-size: 1rem;">Body text style example</p>
-                    <p style="font-size: 0.875rem; color: var(--text-secondary);">Caption or helper text</p>
-                </div>
+    <div class="delivery-card">
+      <table class="delivery">
+        <thead>
+          <tr>
+            <th class="product-cell">Product</th>
+            <th class="batch-cell">Batch</th>
+            <th class="expiry-cell">Expiry</th>
+            <th class="category-cell">Category</th>
+            <th class="num-cell">Pack Size</th>
+            <th class="num-cell">Received Qty</th>
+            <th class="accepted-cell accepted-head">Accepted Qty</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Row 1 -->
+          <tr>
+            <td class="product-cell">
+              <select class="field">
+                <option>Paracetamol 500 mg Tablet</option>
+              </select>
+              <div class="eaushadi-info"><span class="label">eAushadi:</span><span class="name">Paracetamol Tablets IP 500mg</span></div>
+            </td>
+            <td><input class="field readonly" value="PCTJ25148" readonly /></td>
+            <td><input class="field readonly" type="date" value="2026-09-17" readonly /></td>
+            <td>
+              <select class="field"><option>📁 Medicine</option></select>
+            </td>
+            <td><input class="field readonly" value="100" readonly /></td>
+            <td><input class="field readonly" value="1000" readonly /></td>
+            <td><input class="field accepted-input" value="1000" /></td>
+            <td>
+              <button class="icon-btn" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </td>
+          </tr>
+          <!-- Row 2 -->
+          <tr>
+            <td class="product-cell">
+              <select class="field"><option>Fluconazole 150 mg Tablet</option></select>
+              <div class="eaushadi-info"><span class="label">eAushadi:</span><span class="name">Fluconazole Capsules IP 150mg</span></div>
+            </td>
+            <td><input class="field readonly" value="FLT1302" readonly /></td>
+            <td><input class="field readonly" type="date" value="2027-04-04" readonly /></td>
+            <td><select class="field"><option>📁 Medicine</option></select></td>
+            <td><input class="field readonly" value="100" readonly /></td>
+            <td><input class="field readonly" value="1" readonly /></td>
+            <td><input class="field accepted-input" value="1" /></td>
+            <td>
+              <button class="icon-btn" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+              </button>
+            </td>
+          </tr>
+          <!-- Row 3 -->
+          <tr>
+            <td class="product-cell">
+              <select class="field"><option>Rabies Vaccine Injection 2.5 IU</option></select>
+              <div class="eaushadi-info"><span class="label">eAushadi:</span><span class="name">Anti Rabies Vaccine (Human) IP 2.5IU</span></div>
+            </td>
+            <td><input class="field readonly" value="KB25036" readonly /></td>
+            <td><input class="field readonly" type="date" value="2026-08-28" readonly /></td>
+            <td><select class="field"><option>📁 Medicine</option></select></td>
+            <td><input class="field readonly" value="100" readonly /></td>
+            <td><input class="field readonly" value="20" readonly /></td>
+            <td><input class="field accepted-input" value="18" /></td>
+            <td>
+              <button class="icon-btn" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+              </button>
+            </td>
+          </tr>
+          <!-- Row 4 -->
+          <tr>
+            <td class="product-cell">
+              <select class="field"><option>Ceftriaxone Injection 500 mg</option></select>
+              <div class="eaushadi-info"><span class="label">eAushadi:</span><span class="name">Ceftriaxone Sodium Injection IP 500mg</span></div>
+            </td>
+            <td><input class="field readonly" value="UCD-264" readonly /></td>
+            <td><input class="field readonly" type="date" value="2027-01-03" readonly /></td>
+            <td><select class="field"><option>📁 Medicine</option></select></td>
+            <td><input class="field readonly" value="100" readonly /></td>
+            <td><input class="field readonly" value="100" readonly /></td>
+            <td><input class="field accepted-input" value="100" /></td>
+            <td>
+              <button class="icon-btn" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+              </button>
+            </td>
+          </tr>
+          <!-- Row 5 -->
+          <tr>
+            <td class="product-cell">
+              <select class="field"><option>Lignocaine 2% Injection</option></select>
+              <div class="eaushadi-info"><span class="label">eAushadi:</span><span class="name">Lignocaine Hydrochloride Injection IP 2% w/v</span></div>
+            </td>
+            <td><input class="field readonly" value="VL5022" readonly /></td>
+            <td><input class="field readonly" type="date" value="2026-12-20" readonly /></td>
+            <td><select class="field"><option>📁 Medicine</option></select></td>
+            <td><input class="field readonly" value="100" readonly /></td>
+            <td><input class="field readonly" value="50" readonly /></td>
+            <td><input class="field accepted-input" value="50" /></td>
+            <td>
+              <button class="icon-btn" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+              </button>
+            </td>
+          </tr>
+          <!-- Row 6 -->
+          <tr>
+            <td class="product-cell">
+              <select class="field"><option>Ofloxacin 200 mg Tablet</option></select>
+              <div class="eaushadi-info"><span class="label">eAushadi:</span><span class="name">Ofloxacin Tablets IP 200mg</span></div>
+            </td>
+            <td><input class="field readonly" value="UCD-264" readonly /></td>
+            <td><input class="field readonly" type="date" value="2026-11-17" readonly /></td>
+            <td><select class="field"><option>📁 Medicine</option></select></td>
+            <td><input class="field readonly" value="100" readonly /></td>
+            <td><input class="field readonly" value="250" readonly /></td>
+            <td><input class="field accepted-input" value="245" /></td>
+            <td>
+              <button class="icon-btn" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+              </button>
+            </td>
+          </tr>
+          <!-- Row 7 -->
+          <tr>
+            <td class="product-cell">
+              <select class="field"><option>Paracetamol Pediatric Oral Suspension IP 250mg/5ml 1x60ml bottle</option></select>
+              <div class="eaushadi-info"><span class="label">eAushadi:</span><span class="name">Paracetamol Oral Suspension IP 250mg/5ml (60ml)</span></div>
+            </td>
+            <td><input class="field readonly" value="LB6047" readonly /></td>
+            <td><input class="field readonly" type="date" value="2026-05-30" readonly /></td>
+            <td><select class="field"><option>📁 Medicine</option></select></td>
+            <td><input class="field readonly" value="100" readonly /></td>
+            <td><input class="field readonly" value="1" readonly /></td>
+            <td><input class="field accepted-input" value="1" /></td>
+            <td>
+              <button class="icon-btn" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-                <div class="spec-card">
-                    <h3>Spacing</h3>
-                    <p>Use consistent spacing:</p>
-                    <ul>
-                        <li>8px base unit</li>
-                        <li>16px standard padding</li>
-                        <li>24px section spacing</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <section class="implementation-notes">
-            <h2>Implementation Notes</h2>
-            <div class="notes-content">
-                <h3>For Developers</h3>
-                <ul>
-                    <li><strong>Dependencies:</strong> List any required libraries or frameworks</li>
-                    <li><strong>API Requirements:</strong> Specify any backend API endpoints needed</li>
-                    <li><strong>State Management:</strong> Describe state requirements</li>
-                    <li><strong>Accessibility:</strong> Note ARIA labels, keyboard navigation requirements</li>
-                    <li><strong>Performance:</strong> Highlight any performance considerations</li>
-                </ul>
-
-                <h3>Edge Cases</h3>
-                <ul>
-                    <li>Empty states</li>
-                    <li>Error states</li>
-                    <li>Loading states</li>
-                    <li>Validation requirements</li>
-                </ul>
-            </div>
-        </section>
-
-        <section class="feedback-section">
-            <h2>Feedback & Questions</h2>
-            <p>Have feedback on this design? Please share your thoughts via:</p>
-            <ul>
-                <li>GitHub Issues</li>
-                <li>Team Slack channel</li>
-                <li>Design review meetings</li>
-            </ul>
-        </section>
-    </main>
-
-    <footer>
-        <div class="container">
-            <p>&copy; 2026 Care - Design Features Repository</p>
-            <p><a href="../../index.html">Back to Features</a></p>
+      <div class="delivery-footer">
+        <div class="footer-left">
+          <button class="ghost-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Another
+          </button>
+          <button class="ghost-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            Load from order (7 items)
+          </button>
         </div>
-    </footer>
+        <button class="btn btn-primary">
+          Save <span class="kbd">⇧ + ENTER</span>
+        </button>
+      </div>
+    </div>
 
-    <script src="../../assets/js/main.js"></script>
-    <script src="script.js"></script>
+    <div class="note">Tip: The eAushadi name (shown under each product) is the source-of-truth label from the inward record. Batch, Expiry, Pack Size and Received Qty are locked — edit only the Accepted Qty after physical verification.</div>
+
+  </main>
+</div>
 </body>
 </html>
