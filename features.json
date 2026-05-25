@@ -19,6 +19,15 @@
       "tags": ["ui"]
     },
     {
+      "id": "fetch-eaushadi_inwards",
+      "name": "Fetch eAushadi inwards",
+      "description": "A sample feature demonstrating the structure and layout for design prototypes.",
+      "status": "Sample",
+      "dateAdded": "2026-05-25",
+      "path": "features/fetch-eaushado_inwards/index.html",
+      "tags": ["example", "template"]
+    },
+    {
       "id": "example-feature",
       "name": "Example Feature",
       "description": "A sample feature demonstrating the structure and layout for design prototypes.",
