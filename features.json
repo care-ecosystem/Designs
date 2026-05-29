@@ -1,6 +1,15 @@
 {
   "features": [
     {
+      "id": "fetch-from-eaushadi",
+      "name": "Fetch stock from eAushadi",
+      "description": "A sample feature demonstrating the structure and layout for design prototypes.",
+      "status": "Review",
+      "dateAdded": "2026-05-25",
+      "path": "features/fetch-from-eaushadhi/index.html",
+      "tags": ["example", "template"]
+    },
+    {
       "id": "hmis-feedback-v1",
       "name": "HMIS Patient Feedback v1",
       "description": "To capture feedback from the Patient to improve the quality of health services",
