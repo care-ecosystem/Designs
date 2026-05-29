@@ -20,11 +20,19 @@
     },
     {
       "id": "fetch-eaushadi_inwards",
-      "name": "Fetch eAushadi inwards",
+      "name": "Fetch eAushadi inwards draft",
       "description": "A sample feature demonstrating the structure and layout for design prototypes.",
       "status": "Sample",
       "dateAdded": "2026-05-25",
-      "path": "features/fetch-eaushado_inwards/index.html",
+      "path": "features/fetch-eaushadi_inwards/index.html",
+      "tags": ["example", "template"]
+    }, {
+      "id": "fetch_eaushadi_inwards",
+      "name": "Fetch eAushadi inwards",
+      "description": "A sample feature demonstrating the structure and layout for design prototypes.",
+      "status": "Review",
+      "dateAdded": "2026-05-25",
+      "path": "features/etch-eaushadi_inwards/index.html",
       "tags": ["example", "template"]
     },
     {
