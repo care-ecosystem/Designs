@@ -102,15 +102,38 @@ EOF
 
 # Add to features.json
 if [ -f "features.json" ]; then
-    # Check if there are existing features
-    if grep -q '"features":\s*\[\s*\]' features.json; then
-        # Empty array, just add the feature
-        sed -i.bak "s/\"features\":\s*\[\s*\]/\"features\": [\n$NEW_FEATURE\n  ]/" features.json
-    else
-        # Add to existing features array
-        sed -i.bak "s/\(\"features\":\s*\[\)/\1\n$NEW_FEATURE,/" features.json
-    fi
-    rm features.json.bak
+    # Write new feature to a temporary file
+    echo "$NEW_FEATURE" > /tmp/new_feature.json
+
+    # Use Python for reliable JSON manipulation
+    python3 << 'PYTHON_SCRIPT'
+import json
+import sys
+
+try:
+    # Read existing features.json
+    with open('features.json', 'r') as f:
+        data = json.load(f)
+
+    # Read new feature
+    with open('/tmp/new_feature.json', 'r') as f:
+        new_feature = json.load(f)
+
+    # Add new feature to the beginning of the array
+    data['features'].insert(0, new_feature)
+
+    # Write back to features.json
+    with open('features.json', 'w') as f:
+        json.dump(data, f, indent=2)
+
+    print("✓ Features.json updated successfully")
+except Exception as e:
+    print(f"Error updating features.json: {e}", file=sys.stderr)
+    sys.exit(1)
+PYTHON_SCRIPT
+
+    # Clean up temp file
+    rm -f /tmp/new_feature.json
 fi
 
 echo -e "\n${GREEN}✓ Feature created successfully!${NC}"
