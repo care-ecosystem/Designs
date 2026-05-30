@@ -1,13 +1,27 @@
 {
   "features": [
     {
+      "id": "radiology",
+      "name": "radiology",
+      "description": "radiology",
+      "status": "Draft",
+      "dateAdded": "2026-05-30",
+      "path": "features/radiology/index.html",
+      "tags": [
+        "ui"
+      ]
+    },
+    {
       "id": "fetch-from-eaushadi",
       "name": "Fetch stock from eAushadi",
       "description": "A sample feature demonstrating the structure and layout for design prototypes.",
       "status": "Review",
       "dateAdded": "2026-05-25",
       "path": "features/fetch-from-eaushadhi/index.html",
-      "tags": ["example", "template"]
+      "tags": [
+        "example",
+        "template"
+      ]
     },
     {
       "id": "hmis-feedback-v1",
@@ -16,7 +30,9 @@
       "status": "Draft",
       "dateAdded": "2026-05-20",
       "path": "features/hmis-feedback-v1/index.html",
-      "tags": ["ui"]
+      "tags": [
+        "ui"
+      ]
     },
     {
       "id": "hmis-feedback-v2",
@@ -25,7 +41,9 @@
       "status": "Draft",
       "dateAdded": "2026-05-20",
       "path": "features/hmis-feedback-v2/index.html",
-      "tags": ["ui"]
+      "tags": [
+        "ui"
+      ]
     },
     {
       "id": "fetch-eaushadi_inwards",
@@ -34,15 +52,22 @@
       "status": "Sample",
       "dateAdded": "2026-05-25",
       "path": "features/fetch-eaushadi_inwards/index.html",
-      "tags": ["example", "template"]
-    }, {
+      "tags": [
+        "example",
+        "template"
+      ]
+    },
+    {
       "id": "fetch_eaushadi_inwards",
       "name": "Fetch eAushadi inwards",
       "description": "A sample feature demonstrating the structure and layout for design prototypes.",
       "status": "Review",
       "dateAdded": "2026-05-25",
       "path": "features/etch-eaushadi_inwards/index.html",
-      "tags": ["example", "template"]
+      "tags": [
+        "example",
+        "template"
+      ]
     },
     {
       "id": "example-feature",
@@ -51,7 +76,10 @@
       "status": "Sample",
       "dateAdded": "2026-05-20",
       "path": "features/example-feature/index.html",
-      "tags": ["example", "template"]
+      "tags": [
+        "example",
+        "template"
+      ]
     }
   ]
 }

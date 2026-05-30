@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Radiology DICOM Report — CARE</title>
+<style>
+  :root {
+    --green-700: #0a6b3b;
+    --green-600: #0e7a44;
+    --green-500: #14924f;
+    --green-50:  #e8f3ed;
+    --green-100: #d4ead9;
+    --bg:        #f7f8fa;
+    --surface:   #ffffff;
+    --border:    #e5e7eb;
+    --border-strong: #d1d5db;
+    --text:      #111827;
+    --text-soft: #4b5563;
+    --text-muted:#6b7280;
+    --readonly-bg: #f3f4f6;
+    --shadow-sm: 0 1px 2px rgba(16,24,40,.04);
+    --shadow-md: 0 1px 3px rgba(16,24,40,.06), 0 1px 2px rgba(16,24,40,.04);
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    min-height: 100vh;
+  }
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 0;
+    gap: 6px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+  .nav-item {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .nav-item:hover, .nav-item.active { background: var(--green-50); color: var(--green-700); }
+  .spacer { flex: 1; }
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: #e6f0ff;
+    color: #1e40af;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  .main { padding: 28px 36px 60px; max-width: 1400px; }
+
+  /* Page header */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    gap: 16px;
+  }
+  .page-header-left { display: flex; align-items: flex-start; gap: 12px; }
+  .back-btn {
+    width: 36px; height: 36px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-soft);
+    flex-shrink: 0;
+  }
+  .back-btn:hover { background: #f9fafb; }
+  .page-title { font-size: 22px; font-weight: 600; margin: 0 0 4px; letter-spacing: -.01em; }
+  .page-subtitle { font-size: 13px; color: var(--text-soft); }
+  .page-subtitle strong { color: var(--text); font-weight: 600; }
+  .info-icon {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .info-icon:hover { background: #f9fafb; }
+
+  /* Patient meta strip */
+  .meta-strip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 18px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .meta-item .meta-label {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .meta-item .meta-value {
+    font-size: 13.5px;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .meta-item .meta-value.muted {
+    color: var(--text-muted);
+    font-weight: 400;
+    font-size: 12.5px;
+  }
+  .badge-status {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    color: #92400e;
+  }
+
+  /* Main report card */
+  .report-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .report-card-header {
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fafbfc;
+  }
+  .report-card-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .report-card-title .muted {
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-left: 6px;
+    font-size: 13px;
+  }
+  .report-card-body {
+    padding: 22px;
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 24px;
+  }
+
+  /* Field */
+  .field-group {
+    margin-bottom: 18px;
+  }
+  .field-group:last-child { margin-bottom: 0; }
+  .field-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .field-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .field-label .required { color: #dc2626; }
+  .field-actions {
+    display: flex;
+    gap: 4px;
+  }
+  .micro-btn {
+    width: 24px; height: 24px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .micro-btn:hover {
+    background: var(--green-50);
+    color: var(--green-700);
+    border-color: var(--green-100);
+  }
+
+  .field {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+    font-family: inherit;
+  }
+  .field:focus {
+    border-color: var(--green-500);
+    box-shadow: 0 0 0 3px rgba(20,146,79,.12);
+  }
+  .field[readonly], .field.readonly {
+    background: var(--readonly-bg);
+    color: var(--text-soft);
+  }
+  select.field {
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+  }
+  textarea.field {
+    resize: vertical;
+    min-height: 130px;
+    line-height: 1.55;
+    font-family: inherit;
+  }
+  textarea.field.tall { min-height: 180px; }
+  textarea.field.short { min-height: 96px; }
+
+  .helper {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 5px;
+  }
+
+  /* Chips */
+  .chip-input {
+    width: 100%;
+    min-height: 130px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    background: #fff;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-content: flex-start;
+    align-items: flex-start;
+    cursor: text;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .chip-input:focus-within {
+    border-color: var(--green-500);
+    box-shadow: 0 0 0 3px rgba(20,146,79,.12);
+  }
+  .chip-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 4px 4px 10px;
+    background: var(--green-50);
+    border: 1px solid var(--green-100);
+    border-radius: 4px;
+    font-size: 12.5px;
+    color: var(--green-700);
+  }
+  .chip-tag .x {
+    width: 16px; height: 16px;
+    border-radius: 3px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--green-700);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .12s;
+  }
+  .chip-tag .x:hover { background: var(--green-100); }
+  .chip-input .placeholder {
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 4px 6px;
+  }
+
+  /* Right column field with rich textarea + helper buttons */
+  .protocol-pill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .protocol-pill {
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--text-soft);
+    cursor: pointer;
+    transition: background .12s, border-color .12s, color .12s;
+  }
+  .protocol-pill:hover {
+    background: var(--green-50);
+    color: var(--green-700);
+    border-color: var(--green-100);
+  }
+
+  /* Footer */
+  .report-card-footer {
+    padding: 16px 22px;
+    border-top: 1px solid var(--border);
+    background: #fafbfc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .footer-left { display: flex; gap: 10px; }
+  .footer-right { display: flex; gap: 10px; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    background: #fff;
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+    transition: background .15s, border-color .15s;
+    font-family: inherit;
+  }
+  .btn:hover { background: #f9fafb; }
+  .btn-primary {
+    background: var(--green-600);
+    border-color: var(--green-600);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--green-700); border-color: var(--green-700); }
+  .btn-ghost {
+    border-color: transparent;
+    background: transparent;
+    color: var(--text-soft);
+    box-shadow: none;
+  }
+  .btn-ghost:hover { background: #f3f4f6; color: var(--text); }
+
+  /* Right-side panel banner about auto-save */
+  .autosave {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .autosave .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green-500);
+    display: inline-block;
+  }
+
+  svg { display: block; }
+
+  @media (max-width: 1024px) {
+    .report-card-body { grid-template-columns: 1fr; }
+    .meta-strip { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .main { padding: 18px 14px 40px; }
+    .meta-strip { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="nav-item" title="Home">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+    </div>
+    <div class="nav-item" title="Encounters">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18v-7a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v7"></path><path d="M2 18h20"></path><circle cx="7" cy="12" r="2"></circle></svg>
+    </div>
+    <div class="nav-item active" title="Radiology">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 3v18M3 12h18"></path><circle cx="12" cy="12" r="4"></circle></svg>
+    </div>
+    <div class="nav-item" title="Lab">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6L4 20a2 2 0 0 0 1.8 3h12.4A2 2 0 0 0 20 20l-5-11V3"></path><line x1="7" y1="3" x2="17" y2="3"></line></svg>
+    </div>
+    <div class="nav-item" title="Pharmacy">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-4.5A2 2 0 0 1 6.4 3h11.2a2 2 0 0 1 1.9 1.5L21 9"></path><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><line x1="12" y1="13" x2="12" y2="17"></line><line x1="10" y1="15" x2="14" y2="15"></line></svg>
+    </div>
+    <div class="nav-item" title="Reports">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+    </div>
+    <div class="spacer"></div>
+    <div class="avatar">AU</div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Page header -->
+    <header class="page-header">
+      <div class="page-header-left">
+        <button class="back-btn" title="Back">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <div>
+          <h1 class="page-title">Radiology DICOM Report</h1>
+          <div class="page-subtitle">Reporting on study <strong>ACC-2026-005821</strong> · Patient <strong>R. Iyer (M, 47)</strong></div>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <span class="autosave"><span class="dot"></span>Auto-saved 2 min ago</span>
+        <button class="btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          View Images
+        </button>
+      </div>
+    </header>
+
+    <!-- Patient meta strip -->
+    <div class="meta-strip">
+      <div class="meta-item">
+        <div class="meta-label">Patient</div>
+        <div class="meta-value">Ravi Iyer</div>
+        <div class="meta-value muted">M, 47 · MRN 884302</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Study Date</div>
+        <div class="meta-value">30 May 2026</div>
+        <div class="meta-value muted">10:42 AM</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Referring Physician</div>
+        <div class="meta-value">Dr. Anita Sharma</div>
+        <div class="meta-value muted">General Medicine</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Accession #</div>
+        <div class="meta-value">ACC-2026-005821</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Status</div>
+        <div class="meta-value"><span class="badge-status">Pending Report</span></div>
+      </div>
+    </div>
+
+    <!-- Report card -->
+    <div class="report-card">
+      <div class="report-card-header">
+        <h2 class="report-card-title">Radiology DICOM Report <span class="muted">· Template: Chest CT (with contrast)</span></h2>
+        <button class="info-icon" title="About this report">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        </button>
+      </div>
+
+      <div class="report-card-body">
+        <!-- LEFT column -->
+        <div class="report-card-left">
+          <!-- Modality -->
+          <div class="field-group">
+            <div class="field-header">
+              <label class="field-label">Modality Type <span class="required">*</span></label>
+              <div class="field-actions">
+                <button class="micro-btn" title="Add">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+                <button class="micro-btn" title="Edit options">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
+                </button>
+              </div>
+            </div>
+            <select class="field">
+              <option>CT — Computed Tomography</option>
+              <option>MR — Magnetic Resonance</option>
+              <option>CR — Computed Radiography</option>
+              <option>US — Ultrasound</option>
+              <option>XA — X-Ray Angiography</option>
+              <option>NM — Nuclear Medicine</option>
+            </select>
+          </div>
+
+          <!-- Body Part -->
+          <div class="field-group">
+            <div class="field-header">
+              <label class="field-label">Body Part <span class="required">*</span></label>
+              <div class="field-actions">
+                <button class="micro-btn" title="Add"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+                <button class="micro-btn" title="Edit options"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg></button>
+              </div>
+            </div>
+            <div class="chip-input">
+              <span class="chip-tag">Chest <button class="x" title="Remove">×</button></span>
+              <span class="chip-tag">Mediastinum <button class="x" title="Remove">×</button></span>
+              <span class="chip-tag">Lower Lobe (Right) <button class="x" title="Remove">×</button></span>
+              <span class="placeholder">+ Add region</span>
+            </div>
+          </div>
+
+          <!-- Scan Protocol -->
+          <div class="field-group">
+            <div class="field-header">
+              <label class="field-label">Scan Protocol</label>
+              <div class="field-actions">
+                <button class="micro-btn" title="Add"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+                <button class="micro-btn" title="Edit options"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg></button>
+              </div>
+            </div>
+            <textarea class="field short">Helical CT chest with IV contrast (Iohexol 100 ml). Slice thickness 1.25 mm. Reconstructed in axial, coronal and sagittal planes. Lung and mediastinal windows reviewed.</textarea>
+            <div class="protocol-pill-list">
+              <span class="protocol-pill">+ Non-contrast</span>
+              <span class="protocol-pill">+ HRCT</span>
+              <span class="protocol-pill">+ Angiogram phase</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT column -->
+        <div class="report-card-right">
+          <!-- Scan Protocol (compact summary - matches mock right column upper field) -->
+          <div class="field-group">
+            <div class="field-header">
+              <label class="field-label">Scan Protocol Summary</label>
+              <span class="helper" style="margin:0;">Auto-derived from left panel</span>
+            </div>
+            <input class="field readonly" readonly value="CT Chest w/ contrast · 1.25 mm helical · 3-plane reconstruction" />
+          </div>
+
+          <!-- Technique -->
+          <div class="field-group">
+            <div class="field-header">
+              <label class="field-label">Technique</label>
+            </div>
+            <textarea class="field short">Patient positioned supine. Contiguous axial sections obtained from lung apices through adrenals after administration of 100 ml non-ionic IV contrast at 3 ml/s. No motion artefact. DLP 412 mGy·cm.</textarea>
+          </div>
+
+          <!-- Findings -->
+          <div class="field-group">
+            <div class="field-header">
+              <label class="field-label">Findings <span class="required">*</span></label>
+              <button class="btn-ghost btn" style="padding:4px 8px; font-size:11.5px;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
+                Insert from template
+              </button>
+            </div>
+            <textarea class="field tall">Lungs: A 2.4 × 1.8 cm spiculated nodule is identified in the posterior segment of the right lower lobe, demonstrating heterogeneous enhancement. No cavitation. Adjacent pleural tagging noted.
+
+Mediastinum: Mildly enlarged right paratracheal and subcarinal lymph nodes, the largest measuring 14 mm in short-axis diameter. No pericardial effusion.
+
+Pleura: Trace right pleural effusion. No pneumothorax.
+
+Bones: Degenerative changes of the dorsal spine. No suspicious osseous lesion.
+
+Visualised upper abdomen: Unremarkable.</textarea>
+          </div>
+
+          <!-- Impression -->
+          <div class="field-group">
+            <div class="field-header">
+              <label class="field-label">Impression <span class="required">*</span></label>
+            </div>
+            <textarea class="field short">1. Spiculated 2.4 cm nodule in the right lower lobe with associated mediastinal lymphadenopathy — highly suspicious for primary lung malignancy. Tissue diagnosis recommended.
+2. Trace right pleural effusion.
+3. No evidence of distant metastatic disease within the imaged volume.</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="report-card-footer">
+        <div class="footer-left">
+          <button class="btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            Save as Template
+          </button>
+          <button class="btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            Preview
+          </button>
+        </div>
+        <div class="footer-right">
+          <button class="btn">Cancel</button>
+          <button class="btn btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Save &amp; Sign
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // Remove chip tags
+  document.querySelectorAll('.chip-tag .x').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.chip-tag').remove();
+    });
+  });
+
+  // Click protocol pill → append into the protocol textarea
+  document.querySelectorAll('.protocol-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const ta = pill.closest('.field-group').querySelector('textarea.field');
+      if (!ta) return;
+      const label = pill.textContent.replace(/^\+\s*/, '').trim();
+      ta.value = (ta.value.trim() ? ta.value.trimEnd() + '\n+ ' : '+ ') + label;
+      ta.focus();
+    });
+  });
+</script>
+</body>
+</html>
