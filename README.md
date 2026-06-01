@@ -4,7 +4,7 @@ A centralized repository for showcasing UI/UX design prototypes and feature impl
 
 ## Live Demo
 
-Visit the live site: `https://your-username.github.io/designs`
+Visit the live site: `https://care-ecosystem.github.io/Designs`
 
 ## Overview
 
