@@ -9,28 +9,14 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy to Cloudflare Workers
+    name: Deploy to Cloudflare Pages
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy to Cloudflare Workers
+      - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
-
-      - name: Deploy version to production
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: versions deploy
-
-      - name: Deploy triggers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: triggers deploy
+          command: pages deploy . --project-name=designs
