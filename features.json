@@ -1,6 +1,19 @@
 {
   "features": [
     {
+      "id": "eaushadhi-v2",
+      "name": "eaushadhi-v2",
+      "description": "eaushadhi with inward fetch and admin screens",
+      "status": "Review",
+      "dateAdded": "2026-06-04",
+      "path": "features/eaushadhi-v2/index.html",
+      "tags": [
+        "ui",
+        "admin",
+        "eaushadhi"
+      ]
+    },
+    {
       "id": "radiology",
       "name": "radiology",
       "description": "radiology",

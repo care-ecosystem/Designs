@@ -1,0 +1,2789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Inward Purchase Flow — eAushadhi</title>
+<style>
+  :root {
+    --green-700: #0a6b3b;
+    --green-600: #0e7a44;
+    --green-500: #14924f;
+    --green-50:  #e8f3ed;
+    --green-100: #d4ead9;
+    --bg:        #f7f8fa;
+    --surface:   #ffffff;
+    --border:    #e5e7eb;
+    --border-strong: #d1d5db;
+    --text:      #111827;
+    --text-soft: #4b5563;
+    --text-muted:#6b7280;
+    --readonly-bg: #f3f4f6;
+    --shadow-sm: 0 1px 2px rgba(16,24,40,.04);
+    --shadow-md: 0 1px 3px rgba(16,24,40,.06), 0 1px 2px rgba(16,24,40,.04);
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ---------- App shell ---------- */
+  .app {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    min-height: 100vh;
+  }
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 0;
+    gap: 6px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+  .nav-item {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .nav-item:hover, .nav-item.active { background: var(--green-50); color: var(--green-700); }
+  .spacer { flex: 1; }
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: #fce4ec;
+    color: #b03060;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  .main { padding: 28px 32px 60px; }
+
+  /* ---------- Section labels & dividers ---------- */
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--green-700);
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+  .section-label .num {
+    background: var(--green-600);
+    color: #fff;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+  .section-divider {
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+  .flow-arrow { display: none; }
+
+  /* ---------- Screen show/hide ---------- */
+  .screen { display: none; animation: fadeIn .2s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------- Flow tabs (top-level switch) ---------- */
+  .flow-tabs {
+    display: inline-flex;
+    gap: 4px;
+    padding: 5px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-sm);
+  }
+  .flow-tab {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    color: var(--text-soft);
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .flow-tab.active {
+    background: var(--green-50);
+    color: var(--green-700);
+    font-weight: 600;
+  }
+  .flow-tab:hover:not(.active) { background: #f3f4f6; color: var(--text); }
+
+  .flow-section { display: none; }
+  .flow-section.active { display: block; }
+
+  /* ---------- Admin page ---------- */
+  .admin-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .admin-header-left h2 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+  }
+  .admin-header-left .subtitle {
+    color: var(--text-soft);
+    font-size: 13px;
+    max-width: 640px;
+  }
+
+  .admin-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .admin-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    background: #fafbfc;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .search-with-icon {
+    position: relative;
+    flex: 1;
+    max-width: 340px;
+    min-width: 200px;
+  }
+  .search-with-icon > svg {
+    position: absolute;
+    top: 50%; left: 12px;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+  }
+  .search-with-icon input {
+    width: 100%;
+    padding: 9px 12px 9px 36px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .search-with-icon input:focus {
+    border-color: var(--green-500);
+    box-shadow: 0 0 0 3px rgba(20,146,79,.12);
+  }
+  .filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    font-size: 12.5px;
+    color: var(--text-soft);
+  }
+  .filter-pill strong { color: var(--text); font-weight: 600; }
+  .filter-pill .clear {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    padding: 2px;
+    border-radius: 3px;
+  }
+  .filter-pill .clear:hover { background: #f3f4f6; }
+
+  table.admin {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  table.admin th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 12px 16px;
+    background: #fafbfc;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  table.admin td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13.5px;
+    vertical-align: middle;
+  }
+  table.admin tr:last-child td { border-bottom: none; }
+  table.admin tr:hover td { background: #fafbfc; }
+  .code-text {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: var(--text-soft);
+    background: #f3f4f6;
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+  .facility-cell .fname { font-weight: 500; color: var(--text); }
+  .facility-cell .floc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .supplier-summary { color: var(--text-soft); font-size: 12.5px; }
+  .supplier-summary strong { color: var(--text); font-weight: 600; }
+  .row-action-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 5px;
+    font-size: 12.5px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .row-action-btn:hover { background: #f9fafb; }
+
+  /* ---------- Drawer ---------- */
+  .drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 50;
+    display: none;
+    justify-content: flex-end;
+    animation: fadeIn .15s ease;
+  }
+  .drawer-overlay.open { display: flex; }
+  .drawer {
+    width: 540px;
+    max-width: 100vw;
+    background: #fff;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    animation: slideInRight .2s ease;
+    box-shadow: -10px 0 30px rgba(0,0,0,.12);
+  }
+  @keyframes slideInRight {
+    from { transform: translateX(30px); opacity: .6; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  .drawer-header {
+    padding: 20px 24px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .drawer-header h3 {
+    margin: 0 0 4px;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .drawer-header .subtitle {
+    font-size: 13px;
+    color: var(--text-soft);
+  }
+  .drawer-close {
+    width: 30px; height: 30px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-soft);
+    flex-shrink: 0;
+  }
+  .drawer-close:hover { background: #f9fafb; }
+  .drawer-body {
+    flex: 1;
+    padding: 22px 24px;
+    overflow-y: auto;
+  }
+  .drawer-section {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .drawer-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  .drawer-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    color: var(--text);
+  }
+  .drawer-section-sub {
+    font-size: 12.5px;
+    color: var(--text-soft);
+    margin: 0 0 14px;
+    line-height: 1.5;
+  }
+  .drawer-footer {
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    background: #fafbfc;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  /* Toggle switch */
+  .toggle-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    margin-bottom: 8px;
+    gap: 14px;
+  }
+  .toggle-row:last-child { margin-bottom: 0; }
+  .toggle-row-label { flex: 1; }
+  .toggle-row-label .title {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .toggle-row-label .toggle-helper {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.4;
+  }
+  .toggle {
+    position: relative;
+    width: 38px;
+    height: 22px;
+    background: #d1d5db;
+    border: none;
+    border-radius: 11px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background .15s;
+    padding: 0;
+    margin-top: 2px;
+  }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 18px; height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    transition: left .15s;
+    box-shadow: 0 1px 2px rgba(0,0,0,.15);
+  }
+  .toggle.on { background: var(--green-600); }
+  .toggle.on::after { left: 18px; }
+
+  /* Supplier mapping row */
+  .supplier-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto auto;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px;
+    background: #fafbfc;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 10px;
+  }
+  .field-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .field-mini .mini-label {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .field-mini .field { padding: 8px 10px; font-size: 12.5px; }
+  .field-mini .field.synced {
+    background: var(--readonly-bg);
+    color: var(--text-soft);
+    cursor: not-allowed;
+  }
+  .field-mini select.field { padding-right: 28px; }
+
+  /* "Same as supplier name" checkbox */
+  .same-as-supplier {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+    align-self: flex-start;
+  }
+  .same-as-supplier:hover { color: var(--text-soft); }
+  .same-as-supplier input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--green-600);
+  }
+
+  .default-toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .default-toggle .mini-label {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .default-radio {
+    width: 20px; height: 20px;
+    border: 2px solid #cbd5e1;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    position: relative;
+    margin: 4px 0;
+    padding: 0;
+  }
+  .default-radio.selected { border-color: var(--green-600); }
+  .default-radio.selected::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    background: var(--green-600);
+    border-radius: 50%;
+  }
+  .supplier-row .row-delete {
+    width: 30px; height: 34px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 6px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 21px;
+  }
+  .supplier-row .row-delete:hover { color: #b91c1c; background: #fef2f2; }
+  .add-supplier-btn {
+    width: 100%;
+    padding: 10px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--green-700);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: inherit;
+    transition: background .12s, border-color .12s;
+  }
+  .add-supplier-btn:hover { background: var(--green-50); border-color: var(--green-100); }
+
+  /* Field group / label / helper inside drawer */
+  .drawer-body .field-group { margin-bottom: 16px; }
+  .drawer-body .field-group:last-child { margin-bottom: 0; }
+  .drawer-body .field-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .drawer-body .field-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .drawer-body .field-label .required { color: #dc2626; margin-left: 2px; }
+  .drawer-body .helper {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 5px;
+    line-height: 1.4;
+  }
+
+  /* ---------- Top stepper ---------- */
+  .stepper {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow-sm);
+    position: sticky;
+    top: 12px;
+    z-index: 20;
+  }
+  .stepper-inner {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+  }
+  .step-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: transparent;
+    white-space: nowrap;
+    transition: background .12s, color .12s, border-color .12s;
+    font-family: inherit;
+  }
+  .step-pill:hover { background: #f3f4f6; color: var(--text); }
+  .step-pill.current {
+    background: var(--green-50);
+    color: var(--green-700);
+    border-color: var(--green-100);
+    font-weight: 600;
+  }
+  .step-pill.done { color: var(--text-soft); }
+  .step-pill .step-num {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: var(--text-soft);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .step-pill.current .step-num {
+    background: var(--green-600);
+    color: #fff;
+  }
+  .step-pill.done .step-num {
+    background: var(--green-100);
+    color: var(--green-700);
+  }
+  .step-arrow {
+    color: #d1d5db;
+    flex-shrink: 0;
+    margin: 0 -2px;
+  }
+
+  /* Nav footer for prototype */
+  .proto-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 28px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    gap: 10px;
+  }
+  .proto-nav .nav-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .proto-nav-actions { display: flex; gap: 8px; }
+  .nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 13px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #fff;
+    font-size: 12.5px;
+    color: var(--text);
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    font-family: inherit;
+  }
+  .nav-btn:hover { background: #f9fafb; }
+  .nav-btn[disabled] { opacity: .4; cursor: not-allowed; }
+  .nav-btn.primary {
+    background: var(--green-600);
+    border-color: var(--green-600);
+    color: #fff;
+  }
+  .nav-btn.primary:hover { background: var(--green-700); }
+
+  /* ---------- Page header ---------- */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .page-title-group { display: flex; align-items: center; gap: 12px; }
+  .page-title { font-size: 22px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
+  .status-pill {
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: #fff;
+    font-size: 12px;
+    color: var(--text-soft);
+    font-weight: 500;
+  }
+  .header-actions { display: flex; gap: 10px; }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .15s, border .15s, color .15s, box-shadow .15s;
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn:hover { background: #f9fafb; }
+  .btn-primary {
+    background: var(--green-600);
+    border-color: var(--green-600);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--green-700); border-color: var(--green-700); }
+  .kbd {
+    background: #eef0f3;
+    color: var(--text-soft);
+    border-radius: 4px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 4px;
+  }
+  .btn-primary .kbd { background: rgba(255,255,255,.18); color: #fff; }
+  .close-btn {
+    width: 34px; height: 34px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-soft);
+  }
+  .close-btn:hover { background: #f9fafb; }
+
+  /* ---------- Tabs ---------- */
+  .tabs {
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 18px;
+  }
+  .tab {
+    padding: 10px 0;
+    font-size: 14px;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    font-weight: 500;
+  }
+  .tab.active {
+    color: var(--green-700);
+    border-bottom-color: var(--green-600);
+    font-weight: 600;
+  }
+
+  /* ---------- Search ---------- */
+  .search {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    font-size: 13.5px;
+    color: var(--text);
+    margin-bottom: 14px;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .search:focus { border-color: var(--green-500); box-shadow: 0 0 0 3px rgba(20,146,79,.12); }
+  .search::placeholder { color: var(--text-muted); }
+
+  /* ---------- Card (list & form) ---------- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ---------- List table ---------- */
+  table.list { width: 100%; border-collapse: collapse; }
+  table.list th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    padding: 12px 16px;
+    background: #fafbfc;
+    border-bottom: 1px solid var(--border);
+  }
+  table.list td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13.5px;
+    vertical-align: middle;
+  }
+  table.list tr:last-child td { border-bottom: none; }
+  table.list tr:hover td { background: #fafbfc; }
+
+  .status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    color: var(--text-soft);
+    background: #fff;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: #fff;
+    font-size: 12.5px;
+    color: var(--text-soft);
+    cursor: pointer;
+  }
+  .chip:hover { background: #f9fafb; }
+  .created-by .name { font-weight: 500; color: var(--text); }
+  .created-by .meta { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+  .view-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 5px;
+    font-size: 12.5px;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .view-btn:hover { background: #f9fafb; }
+
+  /* ---------- Fetch form ---------- */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    box-shadow: var(--shadow-sm);
+    max-width: 1100px;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 20px;
+  }
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+  .field-group.full { grid-column: 1 / -1; }
+  .label { font-size: 13px; font-weight: 500; color: var(--text); }
+  .label .optional {
+    color: var(--text-muted);
+    font-weight: 400;
+    font-style: italic;
+    margin-left: 4px;
+  }
+  .label .required { color: #dc2626; margin-left: 2px; }
+
+  /* ---------- Form fields ---------- */
+  .field {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+    font-family: inherit;
+  }
+  .field:focus {
+    border-color: var(--green-500);
+    box-shadow: 0 0 0 3px rgba(20,146,79,.12);
+  }
+  .field[disabled], .field.disabled,
+  .field[readonly], .field.readonly {
+    background: var(--readonly-bg);
+    color: var(--text-soft);
+    cursor: not-allowed;
+    border-color: var(--border);
+  }
+  .field[disabled]:focus, .field.disabled:focus,
+  .field[readonly]:focus, .field.readonly:focus {
+    box-shadow: none; border-color: var(--border);
+  }
+  textarea.field { min-height: 92px; resize: vertical; }
+  select.field {
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+  }
+
+  .helper { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  .tags-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    font-size: 13.5px;
+    color: var(--text-soft);
+    cursor: text;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .tags-input:hover { border-color: var(--text-muted); }
+  .tags-input .tag-ico { color: var(--text-muted); }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .info-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 6px;
+    color: #075985;
+    font-size: 12.5px;
+    margin-bottom: 18px;
+    max-width: 1100px;
+  }
+  .info-banner svg { flex-shrink: 0; margin-top: 1px; }
+
+  /* ---------- Delivery details table ---------- */
+  .delivery-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto;
+  }
+  table.delivery {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 980px;
+  }
+  table.delivery th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 12.5px;
+    color: var(--text-soft);
+    padding: 14px 14px;
+    background: #fafbfc;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  table.delivery td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  table.delivery tr:last-child td { border-bottom: none; }
+
+  .product-cell { min-width: 220px; }
+  .batch-cell   { min-width: 130px; }
+  .expiry-cell  { min-width: 150px; }
+  .category-cell{ min-width: 150px; }
+  .num-cell     { min-width: 90px; max-width: 110px; }
+  .accepted-cell{ min-width: 110px; }
+
+  .eaushadi-info {
+    margin-top: 5px;
+    padding-left: 2px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+  .eaushadi-info .label-tag {
+    color: #9ca3af;
+    font-weight: 500;
+  }
+  .eaushadi-info .name { color: var(--text-soft); }
+
+  .accepted-input {
+    border-color: #c8e0d3;
+    background: #f0faf4;
+  }
+  .accepted-input:focus { border-color: var(--green-500); background: #fff; }
+
+  th.accepted-head { color: var(--green-700); font-weight: 600; }
+
+  .icon-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color .15s, background .15s;
+  }
+  .icon-btn:hover { color: #b91c1c; background: #fef2f2; }
+
+  .delivery-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: #fafbfc;
+    border-top: 1px solid var(--border);
+  }
+  .footer-left { display: flex; gap: 10px; flex-wrap: wrap; }
+  .ghost-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 12.5px;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .ghost-btn:hover { background: #f9fafb; }
+
+  /* ---------- Detail page header (screens 4-7) ---------- */
+  .detail-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .detail-header-left { display: flex; align-items: flex-start; gap: 12px; }
+  .back-btn {
+    width: 36px; height: 36px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-soft);
+    flex-shrink: 0;
+  }
+  .back-btn:hover { background: #f9fafb; }
+  .detail-title h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .detail-title .subtitle {
+    font-size: 13px;
+    color: var(--text-soft);
+  }
+  .detail-title .subtitle strong { color: var(--text); font-weight: 600; }
+  .detail-header-right {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .more-btn {
+    width: 36px; height: 36px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-soft);
+  }
+  .more-btn:hover { background: #f9fafb; }
+  .btn-disabled {
+    background: #9ec8af !important;
+    border-color: #9ec8af !important;
+    color: #fff !important;
+    cursor: not-allowed !important;
+    opacity: 1 !important;
+  }
+  .btn-disabled:hover { background: #9ec8af !important; }
+
+  /* Meta strip */
+  .meta-strip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 18px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 18px;
+    box-shadow: var(--shadow-sm);
+  }
+  .meta-item .meta-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .meta-item .meta-value {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .meta-item .meta-value.muted-time {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-top: 2px;
+  }
+  .badge-status {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text-soft);
+  }
+  .badge-status.draft { background: #f3f4f6; border-color: #e5e7eb; color: var(--text-soft); }
+  .badge-status.pending { background: #fef3c7; border-color: #fde68a; color: #92400e; }
+  .badge-status.approved { background: #dbeafe; border-color: #bfdbfe; color: #1e40af; }
+  .badge-status.completed { background: #d1fae5; border-color: #a7f3d0; color: #065f46; }
+  .badge-status.in-progress { background: #dbeafe; border-color: #bfdbfe; color: #1e40af; }
+
+  /* Items section card */
+  .items-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .items-card-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .items-card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+  }
+  .items-card-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* Items table */
+  .items-table-wrap { overflow-x: auto; }
+  table.items {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 1100px;
+  }
+  table.items th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 10px 12px;
+    background: #fafbfc;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  table.items th.group-head {
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+  }
+  table.items td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text);
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  table.items tr:last-child td { border-bottom: none; }
+  table.items .product-name { min-width: 130px; white-space: normal; line-height: 1.35; font-size: 12.5px; }
+  table.items .product-name .eaushadhi-mini { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  table.items .muted-cell { color: var(--text-muted); text-align: center; }
+
+  .status-pill-blue {
+    display: inline-block;
+    padding: 3px 10px;
+    background: #e0e7ff;
+    color: #3730a3;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .status-pill-green {
+    display: inline-block;
+    padding: 3px 10px;
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .condition-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    background: #f3f4f6;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--text-soft);
+  }
+  .row-actions-btn {
+    width: 28px; height: 28px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+  }
+  .row-actions-btn:hover { background: #f9fafb; }
+
+  /* Modal */
+  .modal-backdrop {
+    background: rgba(15, 23, 42, 0.08);
+    border-radius: var(--radius);
+    padding: 40px 20px;
+    margin-top: 18px;
+    position: relative;
+    border: 1px dashed var(--border);
+  }
+  .modal-backdrop::before {
+    content: "Modal overlay";
+    position: absolute;
+    top: 8px; left: 12px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-muted);
+    background: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .modal {
+    max-width: 460px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 20px 50px rgba(15,23,42,.18), 0 4px 12px rgba(15,23,42,.08);
+    padding: 22px 24px;
+    border: 1px solid var(--border);
+  }
+  .modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+  }
+  .modal-sub {
+    font-size: 13px;
+    color: var(--text-soft);
+    margin: 6px 0 16px;
+  }
+  .modal-section { margin-bottom: 18px; }
+  .modal-section-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .radio-options {
+    background: #f7f8fa;
+    border-radius: 8px;
+    padding: 6px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text);
+    transition: border-color .12s, box-shadow .12s;
+  }
+  .radio-option:hover { border-color: var(--text-muted); }
+  .radio-option.selected {
+    border-color: var(--green-600);
+    box-shadow: 0 0 0 1px var(--green-600);
+  }
+  .radio-dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    background: #fff;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .radio-option.selected .radio-dot {
+    border-color: var(--green-600);
+  }
+  .radio-option.selected .radio-dot::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    background: var(--green-600);
+    border-radius: 50%;
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  /* Inline label for sub-flow steps */
+  .step-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 6px 0 18px 4px;
+  }
+
+  .note {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding-left: 4px;
+  }
+
+  /* ---------- Custom product dropdown (suggestions) ---------- */
+  .product-select {
+    position: relative;
+    width: 100%;
+  }
+  .product-trigger {
+    width: 100%;
+    padding: 10px 32px 10px 12px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")
+      no-repeat right 10px center;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .product-trigger:hover { border-color: var(--text-muted); }
+  .product-trigger:focus,
+  .product-select.open .product-trigger {
+    outline: none;
+    border-color: var(--green-500);
+    box-shadow: 0 0 0 3px rgba(20,146,79,.12);
+  }
+  .suggestions {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 360px;
+    max-width: 380px;
+    max-height: 320px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(16,24,40,.10), 0 2px 6px rgba(16,24,40,.06);
+    z-index: 30;
+    padding: 4px 0;
+  }
+  .suggestion {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f3f5;
+    transition: background .12s;
+  }
+  .suggestion:last-child { border-bottom: none; }
+  .suggestion:hover { background: #f9fafb; }
+  .suggestion.selected { background: #f3f4f6; }
+  .suggestion .s-name {
+    font-size: 13.5px;
+    color: var(--text);
+    font-weight: 500;
+    line-height: 1.35;
+  }
+  .suggestion .s-cat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+  .suggestion .s-cat svg { color: var(--text-muted); }
+
+  svg { display: block; }
+
+  @media (max-width: 900px) {
+    .main { padding: 20px 16px 40px; }
+    .page-title { font-size: 18px; }
+    .form-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar (shared across all screens) -->
+  <aside class="sidebar">
+    <div class="nav-item" title="Home">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+    </div>
+    <div class="nav-item" title="Beds">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18v-7a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v7"></path><path d="M2 18h20"></path><circle cx="7" cy="12" r="2"></circle></svg>
+    </div>
+    <div class="nav-item" title="Lab">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6L4 20a2 2 0 0 0 1.8 3h12.4A2 2 0 0 0 20 20l-5-11V3"></path><line x1="7" y1="3" x2="17" y2="3"></line></svg>
+    </div>
+    <div class="nav-item" title="Locations">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+    </div>
+    <div class="nav-item active" title="Pharmacy">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-4.5A2 2 0 0 1 6.4 3h11.2a2 2 0 0 1 1.9 1.5L21 9"></path><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><line x1="12" y1="13" x2="12" y2="17"></line><line x1="10" y1="15" x2="14" y2="15"></line></svg>
+    </div>
+    <div class="nav-item" title="Inventory">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+    </div>
+    <div class="nav-item" title="Calendar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"></path></svg>
+    </div>
+    <div class="nav-item" title="Reports">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+    </div>
+    <div class="spacer"></div>
+    <div class="avatar">FA</div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- ====== FLOW TABS ====== -->
+    <div class="flow-tabs" id="flow-tabs">
+      <button class="flow-tab active" data-flow="inward">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+        Inward Flow
+      </button>
+      <button class="flow-tab" data-flow="admin">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        Admin: Institute Mappings
+      </button>
+    </div>
+
+    <!-- ====== FLOW: INWARD ====== -->
+    <div class="flow-section active" data-flow="inward">
+
+    <!-- ====== STEPPER ====== -->
+    <div class="stepper">
+      <div class="stepper-inner" id="stepper">
+        <button class="step-pill current" data-go="1"><span class="step-num">1</span>List</button>
+        <svg class="step-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        <button class="step-pill" data-go="2"><span class="step-num">2</span>Fetch</button>
+        <svg class="step-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        <button class="step-pill" data-go="3"><span class="step-num">3</span>Delivery Details</button>
+        <svg class="step-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        <button class="step-pill" data-go="4"><span class="step-num">4</span>Draft</button>
+        <svg class="step-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        <button class="step-pill" data-go="5"><span class="step-num">5</span>Pending</button>
+        <svg class="step-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        <button class="step-pill" data-go="6"><span class="step-num">6</span>Confirm</button>
+        <svg class="step-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        <button class="step-pill" data-go="7"><span class="step-num">7</span>Completed</button>
+      </div>
+    </div>
+
+    <!-- ============ SCREEN 1: Inward Purchase Entries (list) ============ -->
+    <section class="screen active" id="screen-1">
+    <div class="section-label"><span class="num">1</span> List View — Inward Purchase Entries</div>
+
+    <header class="page-header">
+      <h1 class="page-title">Inward Purchase Entries</h1>
+      <div class="header-actions">
+        <button class="btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          Fetch from eAushadhi <span class="kbd">C</span>
+        </button>
+        <button class="btn btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Create Delivery <span class="kbd">C</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <div class="tab active">Created</div>
+      <div class="tab">Completed</div>
+    </div>
+
+    <input class="search" type="text" placeholder="Search by supplier" />
+
+    <div class="card">
+      <table class="list">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Supplier</th>
+            <th>Deliver To</th>
+            <th>Status</th>
+            <th>Tags</th>
+            <th>Created By</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>test</td>
+            <td>State Supplier — Mysore Warehouse</td>
+            <td>Pharmacy</td>
+            <td><span class="status-badge">Draft</span></td>
+            <td><span class="chip">🏷️ Add Tags</span></td>
+            <td class="created-by"><div class="name">Care Administrator</div><div class="meta">02:25 PM, 20/05/2026</div></td>
+            <td><button class="view-btn">👁 View Details</button></td>
+          </tr>
+          <tr>
+            <td>Fetch from eAushadhi</td>
+            <td>State Supplier — Mysore Warehouse</td>
+            <td>Pharmacy</td>
+            <td><span class="status-badge">Draft</span></td>
+            <td><span class="chip">🏷️ Add Tags</span></td>
+            <td class="created-by"><div class="name">Facility Administrator</div><div class="meta">12:45 PM, 20/05/2026</div></td>
+            <td><button class="view-btn">👁 View Details</button></td>
+          </tr>
+          <tr>
+            <td>123</td>
+            <td>Test Supplier</td>
+            <td>Pharmacy</td>
+            <td><span class="status-badge">Draft</span></td>
+            <td><span class="chip">🏷️ Add Tags</span></td>
+            <td class="created-by"><div class="name">Care Administrator</div><div class="meta">07:43 PM, 19/05/2026</div></td>
+            <td><button class="view-btn">👁 View Details</button></td>
+          </tr>
+          <tr>
+            <td>Parcetamols</td>
+            <td>Test Supplier</td>
+            <td>Pharmacy</td>
+            <td><span class="status-badge">Draft</span></td>
+            <td><span class="chip">🏷️ Add Tags</span></td>
+            <td class="created-by"><div class="name">Care Administrator</div><div class="meta">12:01 PM, 30/04/2026</div></td>
+            <td><button class="view-btn">👁 View Details</button></td>
+          </tr>
+          <tr>
+            <td>Parcetamols</td>
+            <td>Test Supplier</td>
+            <td>Pharmacy</td>
+            <td><span class="status-badge">Draft</span></td>
+            <td><span class="chip">🏷️ Add Tags</span></td>
+            <td class="created-by"><div class="name">NHA User</div><div class="meta">11:59 AM, 30/04/2026</div></td>
+            <td><button class="view-btn">👁 View Details</button></td>
+          </tr>
+          <tr>
+            <td>Test</td>
+            <td>State Supplier — Mysore Warehouse</td>
+            <td>Pharmacy</td>
+            <td><span class="status-badge">Draft</span></td>
+            <td><span class="chip">🏷️ Add Tags</span></td>
+            <td class="created-by"><div class="name">Care Administrator</div><div class="meta">03:12 PM, 10/04/2026</div></td>
+            <td><button class="view-btn">👁 View Details</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="proto-nav">
+      <span class="nav-hint">Click <strong>Fetch from eAushadhi</strong> or <strong>Create Delivery</strong> in the header above to continue.</span>
+      <div class="proto-nav-actions">
+        <button class="nav-btn primary" data-go="2">Next: Fetch dialog →</button>
+      </div>
+    </div>
+    </section><!-- /screen-1 -->
+
+
+    <!-- ============ SCREEN 2: Fetch Stock from eAushadhi ============ -->
+    <section class="screen" id="screen-2">
+    <div class="section-label"><span class="num">2</span> Fetch Stock from eAushadhi (Pick Supplier &amp; Date)</div>
+
+    <header class="page-header">
+      <div class="page-title-group">
+        <h1 class="page-title">Fetch Stock from eAushadhi</h1>
+        <span class="status-pill">Draft</span>
+      </div>
+      <button class="close-btn" title="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </header>
+
+    <div class="info-banner">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+      <span>The selected supplier scopes the entire session — every delivery created from this inward record will be linked to this supplier.</span>
+    </div>
+
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="field-group">
+          <label class="label" for="name">Name</label>
+          <input id="name" class="field" type="text" value="fetching stock from eAushadhi" />
+        </div>
+
+        <div class="field-group">
+          <label class="label" for="supplier">Supplier <span class="required">*</span></label>
+          <select id="supplier" class="field">
+            <option>State Supplier — Mysore Warehouse</option>
+            <option>District Supplier — North Zone Depot</option>
+          </select>
+          <span class="helper">Pre-selected from your default supplier mapping.</span>
+        </div>
+
+        <div class="field-group">
+          <label class="label" for="date">Inward Date <span class="required">*</span></label>
+          <input id="date" class="field disabled" type="date" value="2026-05-29" disabled />
+          <span class="helper">Defaults to today. Backdating is restricted by facility policy.</span>
+        </div>
+
+        <div></div>
+
+        <div class="field-group full">
+          <label class="label" for="note">Note <span class="optional">(Optional)</span></label>
+          <textarea id="note" class="field" placeholder="Add any notes about this fetch…"></textarea>
+        </div>
+
+        <div class="field-group full">
+          <label class="label">Tags</label>
+          <div class="tags-input">
+            <svg class="tag-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+            <span>Add Tags</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn">Cancel <span class="kbd">ESC</span></button>
+        <button class="btn btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          Fetch <span class="kbd">ENTER</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="proto-nav">
+      <span class="nav-hint">Click the green <strong>Fetch</strong> button in the form above to continue.</span>
+      <div class="proto-nav-actions">
+        <button class="nav-btn" data-go="1">← Back</button>
+        <button class="nav-btn primary" data-go="3">Next: Delivery details →</button>
+      </div>
+    </div>
+    </section><!-- /screen-2 -->
+
+
+    <!-- ============ SCREEN 3: Delivery Details ============ -->
+    <section class="screen" id="screen-3">
+    <div class="section-label"><span class="num">3</span> Delivery Details — Receive &amp; Accept</div>
+
+    <header class="page-header">
+      <div class="page-title-group">
+        <h1 class="page-title">Delivery Details</h1>
+        <span class="status-pill">Draft</span>
+      </div>
+    </header>
+
+    <div class="delivery-card">
+      <table class="delivery">
+        <thead>
+          <tr>
+            <th class="product-cell">Product</th>
+            <th class="batch-cell">Batch</th>
+            <th class="expiry-cell">Expiry</th>
+            <th class="num-cell">Pack Size</th>
+            <th class="num-cell">Received Qty</th>
+            <th class="accepted-cell accepted-head">Accepted Qty</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="product-cell">
+              <div class="product-select open">
+                <button type="button" class="product-trigger">Paracetamol 500 mg Tablet</button>
+                <div class="suggestions">
+                  <div class="suggestion selected">
+                    <div class="s-name">Paracetamol</div>
+                    <div class="s-cat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>Medicines</div>
+                  </div>
+                  <div class="suggestion">
+                    <div class="s-name">Paracetamol 650 mg Tablet</div>
+                    <div class="s-cat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>Medicines</div>
+                  </div>
+                  <div class="suggestion">
+                    <div class="s-name">Paracetamol 500 mg Tablet</div>
+                    <div class="s-cat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>Medicines</div>
+                  </div>
+                  <div class="suggestion">
+                    <div class="s-name">Paracetamol Tablet IP 500 mg</div>
+                    <div class="s-cat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>Medicines</div>
+                  </div>
+                  <div class="suggestion">
+                    <div class="s-name">Paracetamol 100 mg/ml Oral Drop</div>
+                    <div class="s-cat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>Medicines</div>
+                  </div>
+                  <div class="suggestion">
+                    <div class="s-name">Paracetamol 150 mg/ml Injection</div>
+                    <div class="s-cat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>Medicines</div>
+                  </div>
+                  <div class="suggestion">
+                    <div class="s-name">Paracetamol + Phenylephrine Tablet 325 mg + 5 mg</div>
+                    <div class="s-cat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>Medicines</div>
+                  </div>
+                </div>
+              </div>
+              <div class="eaushadi-info"><span class="label-tag">eAushadhi:</span> <span class="name">Paracetamol Tablets IP 500mg</span></div>
+            </td>
+            <td><input class="field readonly" value="PCTJ25148" readonly /></td>
+            <td><input class="field readonly" type="date" value="2026-09-17" readonly /></td>
+            <td><input class="field readonly" value="100" readonly /></td>
+            <td><input class="field readonly" value="1000" readonly /></td>
+            <td><input class="field accepted-input" value="1000" /></td>
+            <td>
+              <button class="icon-btn" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td class="product-cell">
+              <div class="product-select"><button type="button" class="product-trigger">Fluconazole 150 mg Tablet</button></div>
+              <div class="eaushadi-info"><span class="label-tag">eAushadhi:</span> <span class="name">Fluconazole Capsules IP 150mg</span></div>
+            </td>
+            <td><input class="field readonly" value="FLT1302" readonly /></td>
+            <td><input class="field readonly" type="date" value="2027-04-04" readonly /></td>
+            <td><input class="field readonly" value="100" readonly /></td>
+            <td><input class="field readonly" value="1" readonly /></td>
+            <td><input class="field accepted-input" value="1" /></td>
+            <td>
+              <button class="icon-btn" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td class="product-cell">
+              <div class="product-select"><button type="button" class="product-trigger">Rabies Vaccine Injection 2.5 IU</button></div>
+              <div class="eaushadi-info"><span class="label-tag">eAushadhi:</span> <span class="name">Anti Rabies Vaccine (Human) IP 2.5IU</span></div>
+            </td>
+            <td><input class="field readonly" value="KB25036" readonly /></td>
+            <td><input class="field readonly" type="date" value="2026-08-28" readonly /></td>
+            <td><input class="field readonly" value="100" readonly /></td>
+            <td><input class="field readonly" value="20" readonly /></td>
+            <td><input class="field accepted-input" value="18" /></td>
+            <td>
+              <button class="icon-btn" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td class="product-cell">
+              <div class="product-select"><button type="button" class="product-trigger">Ceftriaxone Injection 500 mg</button></div>
+              <div class="eaushadi-info"><span class="label-tag">eAushadhi:</span> <span class="name">Ceftriaxone Sodium Injection IP 500mg</span></div>
+            </td>
+            <td><input class="field readonly" value="UCD-264" readonly /></td>
+            <td><input class="field readonly" type="date" value="2027-01-03" readonly /></td>
+            <td><input class="field readonly" value="100" readonly /></td>
+            <td><input class="field readonly" value="100" readonly /></td>
+            <td><input class="field accepted-input" value="100" /></td>
+            <td>
+              <button class="icon-btn" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td class="product-cell">
+              <div class="product-select"><button type="button" class="product-trigger">Lignocaine 2% Injection</button></div>
+              <div class="eaushadi-info"><span class="label-tag">eAushadhi:</span> <span class="name">Lignocaine Hydrochloride Injection IP 2% w/v</span></div>
+            </td>
+            <td><input class="field readonly" value="VL5022" readonly /></td>
+            <td><input class="field readonly" type="date" value="2026-12-20" readonly /></td>
+            <td><input class="field readonly" value="100" readonly /></td>
+            <td><input class="field readonly" value="50" readonly /></td>
+            <td><input class="field accepted-input" value="50" /></td>
+            <td>
+              <button class="icon-btn" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td class="product-cell">
+              <div class="product-select"><button type="button" class="product-trigger">Ofloxacin 200 mg Tablet</button></div>
+              <div class="eaushadi-info"><span class="label-tag">eAushadhi:</span> <span class="name">Ofloxacin Tablets IP 200mg</span></div>
+            </td>
+            <td><input class="field readonly" value="UCD-264" readonly /></td>
+            <td><input class="field readonly" type="date" value="2026-11-17" readonly /></td>
+            <td><input class="field readonly" value="100" readonly /></td>
+            <td><input class="field readonly" value="250" readonly /></td>
+            <td><input class="field accepted-input" value="245" /></td>
+            <td>
+              <button class="icon-btn" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td class="product-cell">
+              <div class="product-select"><button type="button" class="product-trigger">Paracetamol Pediatric Oral Suspension IP 250mg/5ml 1x60ml bottle</button></div>
+              <div class="eaushadi-info"><span class="label-tag">eAushadhi:</span> <span class="name">Paracetamol Oral Suspension IP 250mg/5ml (60ml)</span></div>
+            </td>
+            <td><input class="field readonly" value="LB6047" readonly /></td>
+            <td><input class="field readonly" type="date" value="2026-05-30" readonly /></td>
+            <td><input class="field readonly" value="100" readonly /></td>
+            <td><input class="field readonly" value="1" readonly /></td>
+            <td><input class="field accepted-input" value="1" /></td>
+            <td>
+              <button class="icon-btn" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="delivery-footer">
+        <div class="footer-left"></div>
+        <button class="btn btn-primary">
+          Save <span class="kbd">⇧ + ENTER</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="note">Tip: The eAushadhi name (shown under each product) is the source-of-truth label from the inward record. Batch, Expiry, Pack Size and Received Qty are locked — edit only the Accepted Qty after physical verification.</div>
+
+    <div class="proto-nav">
+      <span class="nav-hint">Click the green <strong>Save</strong> button in the delivery table to continue.</span>
+      <div class="proto-nav-actions">
+        <button class="nav-btn" data-go="2">← Back</button>
+        <button class="nav-btn primary" data-go="4">Next: Draft (approve) →</button>
+      </div>
+    </div>
+    </section><!-- /screen-3 -->
+
+
+    <!-- ============ SCREEN 4: Stock Saved — Ready for Approval ============ -->
+    <section class="screen" id="screen-4">
+    <div class="section-label"><span class="num">4</span> Stock Saved — Ready for Approval (Draft)</div>
+
+    <div class="detail-header">
+      <div class="detail-header-left">
+        <button class="back-btn" title="Back">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <div class="detail-title">
+          <h2>Fetch from eAushadhi</h2>
+          <div class="subtitle">This request is to dispatch items from <strong>State Supplier — Mysore Warehouse</strong> to <strong>Pharmacy</strong>.</div>
+        </div>
+      </div>
+      <div class="detail-header-right">
+        <button class="btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+          Refetch Inwards <span class="kbd">R</span>
+        </button>
+        <button class="btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          Print <span class="kbd">P</span>
+        </button>
+        <button class="btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
+          Edit <span class="kbd">E</span>
+        </button>
+        <button class="btn btn-primary">
+          Mark as Approved <span class="kbd">M</span>
+        </button>
+        <button class="more-btn" title="More">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="meta-strip">
+      <div class="meta-item">
+        <div class="meta-label">Deliver To</div>
+        <div class="meta-value">Pharmacy</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Supplier</div>
+        <div class="meta-value">State Supplier — Mysore Warehouse</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Status</div>
+        <div class="meta-value"><span class="badge-status draft">Draft</span></div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Tags</div>
+        <div class="meta-value"><span class="chip">#  Add Tags</span></div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Created By</div>
+        <div class="meta-value">Facility Administrator</div>
+        <div class="meta-value muted-time">08:22 AM, 29/05/2026</div>
+      </div>
+    </div>
+
+    <div class="items-card">
+      <div class="items-card-header">
+        <h3 class="items-card-title">Items to Receive</h3>
+      </div>
+      <div class="items-table-wrap">
+        <table class="items">
+          <thead>
+            <tr>
+              <th rowspan="2">Product</th>
+              <th rowspan="2">Batch</th>
+              <th rowspan="2">Requested Qty.</th>
+              <th rowspan="2">Pack Size</th>
+              <th rowspan="2">Pack Qty</th>
+              <th rowspan="2">Dispatched Qty</th>
+              <th rowspan="2">Dispatched Date</th>
+              <th colspan="2" class="group-head">Sale</th>
+              <th colspan="2" class="group-head">Purchase</th>
+              <th rowspan="2">Tax</th>
+              <th rowspan="2">Disc.</th>
+              <th rowspan="2">Status</th>
+              <th rowspan="2">Condition</th>
+              <th rowspan="2">Actions</th>
+            </tr>
+            <tr>
+              <th>Item Price</th>
+              <th>MRP</th>
+              <th>PR</th>
+              <th>TPR</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="product-name">Paracetamol 500 mg Tablet<div class="eaushadhi-mini">eAushadhi: Paracetamol Tablets IP 500mg</div></td>
+              <td>PCTJ25148</td><td>5000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td>
+              <td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td>
+              <td>0.00%</td><td class="muted-cell">—</td>
+              <td><span class="status-pill-blue">In Progress</span></td>
+              <td><span class="condition-pill">Normal</span></td>
+              <td><button class="row-actions-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button></td>
+            </tr>
+            <tr>
+              <td class="product-name">Paracetamol Pediatric Oral Suspension<div class="eaushadhi-mini">eAushadhi: Paracetamol Oral Suspension IP 250mg/5ml</div></td>
+              <td>LB6047</td><td>20000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td>
+              <td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td>
+              <td>0.00%</td><td class="muted-cell">—</td>
+              <td><span class="status-pill-blue">In Progress</span></td>
+              <td><span class="condition-pill">Normal</span></td>
+              <td><button class="row-actions-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button></td>
+            </tr>
+            <tr>
+              <td class="product-name">Ceftriaxone Injection 500 mg<div class="eaushadhi-mini">eAushadhi: Ceftriaxone Sodium Injection IP 500mg</div></td>
+              <td>UCD-264</td><td>20000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td>
+              <td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td>
+              <td>0.00%</td><td class="muted-cell">—</td>
+              <td><span class="status-pill-blue">In Progress</span></td>
+              <td><span class="condition-pill">Normal</span></td>
+              <td><button class="row-actions-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button></td>
+            </tr>
+            <tr>
+              <td class="product-name">Lignocaine 2% Injection<div class="eaushadhi-mini">eAushadhi: Lignocaine Hydrochloride Injection IP 2% w/v</div></td>
+              <td>VL5022</td><td>10000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td>
+              <td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td>
+              <td>0.00%</td><td class="muted-cell">—</td>
+              <td><span class="status-pill-blue">In Progress</span></td>
+              <td><span class="condition-pill">Normal</span></td>
+              <td><button class="row-actions-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button></td>
+            </tr>
+            <tr>
+              <td class="product-name">Fluconazole 150 mg Tablet<div class="eaushadhi-mini">eAushadhi: Fluconazole Capsules IP 150mg</div></td>
+              <td>FLT1302</td><td>30000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td>
+              <td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td>
+              <td>0.00%</td><td class="muted-cell">—</td>
+              <td><span class="status-pill-blue">In Progress</span></td>
+              <td><span class="condition-pill">Normal</span></td>
+              <td><button class="row-actions-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button></td>
+            </tr>
+            <tr>
+              <td class="product-name">Ofloxacin 200 mg Tablet<div class="eaushadhi-mini">eAushadhi: Ofloxacin Tablets IP 200mg</div></td>
+              <td>UCD-264</td><td>20000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td>
+              <td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td>
+              <td>0.00%</td><td class="muted-cell">—</td>
+              <td><span class="status-pill-blue">In Progress</span></td>
+              <td><span class="condition-pill">Normal</span></td>
+              <td><button class="row-actions-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button></td>
+            </tr>
+            <tr>
+              <td class="product-name">Rabies Vaccine Injection 2.5 IU<div class="eaushadhi-mini">eAushadhi: Anti Rabies Vaccine (Human) IP 2.5IU</div></td>
+              <td>KB25036</td><td>4000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td>
+              <td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td>
+              <td>0.00%</td><td class="muted-cell">—</td>
+              <td><span class="status-pill-blue">In Progress</span></td>
+              <td><span class="condition-pill">Normal</span></td>
+              <td><button class="row-actions-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="proto-nav">
+      <span class="nav-hint">Click <strong>Mark as Approved</strong> in the header above to continue.</span>
+      <div class="proto-nav-actions">
+        <button class="nav-btn" data-go="3">← Back</button>
+        <button class="nav-btn primary" data-go="5">Next: Pending →</button>
+      </div>
+    </div>
+    </section><!-- /screen-4 -->
+
+
+    <!-- ============ SCREEN 5: Approved — Ready to Receive ============ -->
+    <section class="screen" id="screen-5">
+    <div class="section-label"><span class="num">5</span> Approved — Ready to Receive (Pending)</div>
+
+    <div class="detail-header">
+      <div class="detail-header-left">
+        <button class="back-btn" title="Back">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <div class="detail-title">
+          <h2>Fetch from eAushadhi</h2>
+          <div class="subtitle">This request is to dispatch items from <strong>State Supplier — Mysore Warehouse</strong> to <strong>Pharmacy</strong>.</div>
+        </div>
+      </div>
+      <div class="detail-header-right">
+        <button class="btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+          Refetch Inwards <span class="kbd">R</span>
+        </button>
+        <button class="btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          Print <span class="kbd">P</span>
+        </button>
+        <button class="btn btn-disabled" disabled>
+          Mark as Completed <span class="kbd">M</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="meta-strip">
+      <div class="meta-item"><div class="meta-label">Deliver To</div><div class="meta-value">Pharmacy</div></div>
+      <div class="meta-item"><div class="meta-label">Supplier</div><div class="meta-value">State Supplier — Mysore Warehouse</div></div>
+      <div class="meta-item"><div class="meta-label">Status</div><div class="meta-value"><span class="badge-status pending">Pending</span></div></div>
+      <div class="meta-item"><div class="meta-label">Tags</div><div class="meta-value"><span class="chip">#  Add Tags</span></div></div>
+      <div class="meta-item">
+        <div class="meta-label">Created By</div>
+        <div class="meta-value">Facility Administrator</div>
+        <div class="meta-value muted-time">08:22 AM, 29/05/2026</div>
+      </div>
+    </div>
+
+    <div class="items-card">
+      <div class="items-card-header">
+        <h3 class="items-card-title">Items to Receive</h3>
+        <div class="items-card-actions">
+          <button class="btn">View All Deliveries <span class="kbd">D</span></button>
+          <button class="btn btn-primary">Receive &amp; Update Stock <span class="kbd">ENTER</span></button>
+          <button class="more-btn" title="More">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+          </button>
+        </div>
+      </div>
+      <div class="items-table-wrap">
+        <table class="items">
+          <thead>
+            <tr>
+              <th rowspan="2">Product</th>
+              <th rowspan="2">Batch</th>
+              <th rowspan="2">Requested Qty.</th>
+              <th rowspan="2">Pack Size</th>
+              <th rowspan="2">Pack Qty</th>
+              <th rowspan="2">Dispatched Qty</th>
+              <th rowspan="2">Dispatched Date</th>
+              <th colspan="2" class="group-head">Sale</th>
+              <th colspan="2" class="group-head">Purchase</th>
+              <th rowspan="2">Tax</th>
+              <th rowspan="2">Disc.</th>
+              <th rowspan="2">Status</th>
+              <th rowspan="2">Condition</th>
+            </tr>
+            <tr>
+              <th>Item Price</th><th>MRP</th><th>PR</th><th>TPR</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="product-name">Paracetamol 500 mg Tablet</td><td>PCTJ25148</td><td>5000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td><td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td>0.00%</td><td class="muted-cell">—</td><td><span class="status-pill-blue">In Progress</span></td><td><span class="condition-pill">Normal</span></td></tr>
+            <tr><td class="product-name">Paracetamol Pediatric Oral Suspension</td><td>LB6047</td><td>20000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td><td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td>0.00%</td><td class="muted-cell">—</td><td><span class="status-pill-blue">In Progress</span></td><td><span class="condition-pill">Normal</span></td></tr>
+            <tr><td class="product-name">Ceftriaxone Injection 500 mg</td><td>UCD-264</td><td>20000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td><td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td>0.00%</td><td class="muted-cell">—</td><td><span class="status-pill-blue">In Progress</span></td><td><span class="condition-pill">Normal</span></td></tr>
+            <tr><td class="product-name">Lignocaine 2% Injection</td><td>VL5022</td><td>10000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td><td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td>0.00%</td><td class="muted-cell">—</td><td><span class="status-pill-blue">In Progress</span></td><td><span class="condition-pill">Normal</span></td></tr>
+            <tr><td class="product-name">Fluconazole 150 mg Tablet</td><td>FLT1302</td><td>30000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td><td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td>0.00%</td><td class="muted-cell">—</td><td><span class="status-pill-blue">In Progress</span></td><td><span class="condition-pill">Normal</span></td></tr>
+            <tr><td class="product-name">Ofloxacin 200 mg Tablet</td><td>UCD-264</td><td>20000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td><td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td>0.00%</td><td class="muted-cell">—</td><td><span class="status-pill-blue">In Progress</span></td><td><span class="condition-pill">Normal</span></td></tr>
+            <tr><td class="product-name">Rabies Vaccine Injection 2.5 IU</td><td>KB25036</td><td>4000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td><td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td>0.00%</td><td class="muted-cell">—</td><td><span class="status-pill-blue">In Progress</span></td><td><span class="condition-pill">Normal</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="proto-nav">
+      <span class="nav-hint">Click <strong>Receive &amp; Update Stock</strong> above to continue.</span>
+      <div class="proto-nav-actions">
+        <button class="nav-btn" data-go="4">← Back</button>
+        <button class="nav-btn primary" data-go="6">Next: Confirm modal →</button>
+      </div>
+    </div>
+    </section><!-- /screen-5 -->
+
+
+    <!-- ============ SCREEN 6: Confirmation Modal ============ -->
+    <section class="screen" id="screen-6">
+    <div class="section-label"><span class="num">6</span> Confirmation — Receive &amp; Update Stock</div>
+
+    <div class="step-meta">A modal opens on top of the Pending screen, asking for the receiving outcome and item condition before stock is committed.</div>
+
+    <div class="modal-backdrop">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="modal-title">Receive &amp; Update Stock</h3>
+          <button class="close-btn" style="width:28px;height:28px;border:none;background:transparent;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <p class="modal-sub">Apply the following updates to <strong>7 selected items</strong>.</p>
+
+        <div class="modal-section">
+          <div class="modal-section-label">Receiving Status</div>
+          <div class="radio-options">
+            <div class="radio-option selected">
+              <span class="radio-dot"></span>
+              <span>Completed</span>
+            </div>
+            <div class="radio-option">
+              <span class="radio-dot"></span>
+              <span>Abandoned</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <div class="modal-section-label">Item Condition?</div>
+          <div class="radio-options">
+            <div class="radio-option selected">
+              <span class="radio-dot"></span>
+              <span>Normal</span>
+            </div>
+            <div class="radio-option">
+              <span class="radio-dot"></span>
+              <span>Damaged</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn">Cancel</button>
+          <button class="btn btn-primary">Confirm <span class="kbd">⇧ + ENTER</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="proto-nav">
+      <span class="nav-hint">Click <strong>Confirm</strong> in the modal above to continue.</span>
+      <div class="proto-nav-actions">
+        <button class="nav-btn" data-go="5">← Back</button>
+        <button class="nav-btn primary" data-go="7">Next: Completed →</button>
+      </div>
+    </div>
+    </section><!-- /screen-6 -->
+
+
+    <!-- ============ SCREEN 7: Items Completed — Ready to Close ============ -->
+    <section class="screen" id="screen-7">
+    <div class="section-label"><span class="num">7</span> Items Completed — Ready to Close</div>
+
+    <div class="detail-header">
+      <div class="detail-header-left">
+        <button class="back-btn" title="Back">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <div class="detail-title">
+          <h2>Fetch from eAushadhi</h2>
+          <div class="subtitle">This request is to dispatch items from <strong>State Supplier — Mysore Warehouse</strong> to <strong>Pharmacy</strong>.</div>
+        </div>
+      </div>
+      <div class="detail-header-right">
+        <button class="btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          Print <span class="kbd">P</span>
+        </button>
+        <button class="btn btn-primary">
+          Mark as Completed <span class="kbd">M</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="meta-strip">
+      <div class="meta-item"><div class="meta-label">Deliver To</div><div class="meta-value">Pharmacy</div></div>
+      <div class="meta-item"><div class="meta-label">Supplier</div><div class="meta-value">State Supplier — Mysore Warehouse</div></div>
+      <div class="meta-item"><div class="meta-label">Status</div><div class="meta-value"><span class="badge-status pending">Pending</span></div></div>
+      <div class="meta-item"><div class="meta-label">Tags</div><div class="meta-value"><span class="chip">#  Add Tags</span></div></div>
+      <div class="meta-item">
+        <div class="meta-label">Created By</div>
+        <div class="meta-value">Facility Administrator</div>
+        <div class="meta-value muted-time">08:22 AM, 29/05/2026</div>
+      </div>
+    </div>
+
+    <div class="items-card">
+      <div class="items-card-header">
+        <h3 class="items-card-title">Items to Receive</h3>
+        <div class="items-card-actions">
+          <button class="btn">View All Deliveries <span class="kbd">D</span></button>
+          <button class="btn btn-disabled" disabled>Receive &amp; Update Stock <span class="kbd">ENTER</span></button>
+          <button class="more-btn" title="More">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+          </button>
+        </div>
+      </div>
+      <div class="items-table-wrap">
+        <table class="items">
+          <thead>
+            <tr>
+              <th rowspan="2">Product</th>
+              <th rowspan="2">Batch</th>
+              <th rowspan="2">Requested Qty.</th>
+              <th rowspan="2">Pack Size</th>
+              <th rowspan="2">Pack Qty</th>
+              <th rowspan="2">Dispatched Qty</th>
+              <th rowspan="2">Dispatched Date</th>
+              <th colspan="2" class="group-head">Sale</th>
+              <th colspan="2" class="group-head">Purchase</th>
+              <th rowspan="2">Tax</th>
+              <th rowspan="2">Disc.</th>
+              <th rowspan="2">Status</th>
+              <th rowspan="2">Condition</th>
+            </tr>
+            <tr><th>Item Price</th><th>MRP</th><th>PR</th><th>TPR</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="product-name">Paracetamol 500 mg Tablet</td><td>PCTJ25148</td><td>5000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td><td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td>0.00%</td><td class="muted-cell">—</td><td><span class="status-pill-green">Completed</span></td><td><span class="condition-pill">Normal</span></td></tr>
+            <tr><td class="product-name">Paracetamol Pediatric Oral Suspension</td><td>LB6047</td><td>20000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td><td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td>0.00%</td><td class="muted-cell">—</td><td><span class="status-pill-green">Completed</span></td><td><span class="condition-pill">Normal</span></td></tr>
+            <tr><td class="product-name">Ceftriaxone Injection 500 mg</td><td>UCD-264</td><td>20000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td><td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td>0.00%</td><td class="muted-cell">—</td><td><span class="status-pill-green">Completed</span></td><td><span class="condition-pill">Normal</span></td></tr>
+            <tr><td class="product-name">Lignocaine 2% Injection</td><td>VL5022</td><td>10000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td><td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td>0.00%</td><td class="muted-cell">—</td><td><span class="status-pill-green">Completed</span></td><td><span class="condition-pill">Normal</span></td></tr>
+            <tr><td class="product-name">Fluconazole 150 mg Tablet</td><td>FLT1302</td><td>30000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td><td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td>0.00%</td><td class="muted-cell">—</td><td><span class="status-pill-green">Completed</span></td><td><span class="condition-pill">Normal</span></td></tr>
+            <tr><td class="product-name">Ofloxacin 200 mg Tablet</td><td>UCD-264</td><td>20000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td><td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td>0.00%</td><td class="muted-cell">—</td><td><span class="status-pill-green">Completed</span></td><td><span class="condition-pill">Normal</span></td></tr>
+            <tr><td class="product-name">Rabies Vaccine Injection 2.5 IU</td><td>KB25036</td><td>4000.00</td><td>100</td><td>1</td><td>100.00</td><td>29/05/2026</td><td>₹0.00</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td>0.00%</td><td class="muted-cell">—</td><td><span class="status-pill-green">Completed</span></td><td><span class="condition-pill">Normal</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="note">Final step: every item is in <strong>Completed</strong>. Clicking <strong>Mark as Completed</strong> in the header closes out the inward record and moves it to the Completed tab in the list view.</div>
+
+    <div class="proto-nav">
+      <span class="nav-hint">Click <strong>Mark as Completed</strong> in the header above to finish — the record moves to the Completed tab.</span>
+      <div class="proto-nav-actions">
+        <button class="nav-btn" data-go="6">← Back</button>
+        <button class="nav-btn primary" data-go="1">Restart flow ↻</button>
+      </div>
+    </div>
+    </section><!-- /screen-7 -->
+
+    </div><!-- /flow-section inward -->
+
+
+    <!-- ====== FLOW: ADMIN — INSTITUTE MAPPINGS ====== -->
+    <div class="flow-section" data-flow="admin">
+
+      <div class="admin-header">
+        <div class="admin-header-left">
+          <h2>Institute Mappings</h2>
+          <div class="subtitle">Configure how each facility connects to eAushadhi and which CARE suppliers map to which eAushadhi warehouses. These mappings drive the supplier picker shown in the Inward Flow.</div>
+        </div>
+        <button class="btn btn-primary" id="open-mapping-drawer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Add Institute Mapping
+        </button>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-controls">
+          <div class="search-with-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" placeholder="Search by facility or institute ID" />
+          </div>
+          <span class="filter-pill">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+            Status is <strong>Active</strong>
+            <button class="clear" title="Clear filter">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </span>
+        </div>
+
+        <table class="admin">
+          <thead>
+            <tr>
+              <th>Facility</th>
+              <th>eAushadhi Institute ID</th>
+              <th>Suppliers Mapped</th>
+              <th>Default Warehouse</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="facility-cell"><div class="fname">City General Hospital</div><div class="floc">Mumbai</div></td>
+              <td><span class="code-text">000931</span></td>
+              <td><span class="supplier-summary"><strong>2</strong> suppliers</span></td>
+              <td>Mysuru WH</td>
+              <td><span class="status-pill-green">Active</span></td>
+              <td><button class="row-action-btn open-mapping-drawer-trigger">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
+                Edit
+              </button></td>
+            </tr>
+            <tr>
+              <td class="facility-cell"><div class="fname">District Hospital</div><div class="floc">Mysore</div></td>
+              <td><span class="code-text">000847</span></td>
+              <td><span class="supplier-summary"><strong>3</strong> suppliers</span></td>
+              <td>Mysore Central WH</td>
+              <td><span class="status-pill-green">Active</span></td>
+              <td><button class="row-action-btn open-mapping-drawer-trigger">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
+                Edit
+              </button></td>
+            </tr>
+            <tr>
+              <td class="facility-cell"><div class="fname">Rural PHC</div><div class="floc">Wayanad</div></td>
+              <td><span class="code-text">001204</span></td>
+              <td><span class="supplier-summary"><strong>1</strong> supplier</span></td>
+              <td>Wayanad District WH</td>
+              <td><span class="status-pill-green">Active</span></td>
+              <td><button class="row-action-btn open-mapping-drawer-trigger">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
+                Edit
+              </button></td>
+            </tr>
+            <tr>
+              <td class="facility-cell"><div class="fname">Community Health Center</div><div class="floc">Kolar</div></td>
+              <td><span class="code-text">001456</span></td>
+              <td><span class="supplier-summary"><strong>2</strong> suppliers</span></td>
+              <td>Bangalore WH</td>
+              <td><span class="status-pill-green">Active</span></td>
+              <td><button class="row-action-btn open-mapping-drawer-trigger">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
+                Edit
+              </button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="proto-nav">
+        <span class="nav-hint">Click <strong>+ Add Institute Mapping</strong> (or any <strong>Edit</strong>) to open the configuration drawer.</span>
+      </div>
+
+    </div><!-- /flow-section admin -->
+
+
+    <!-- ====== DRAWER: Add / Edit Institute Mapping ====== -->
+    <div class="drawer-overlay" id="mapping-drawer">
+      <div class="drawer">
+        <div class="drawer-header">
+          <div>
+            <h3 id="drawer-title">Add Institute Mapping</h3>
+            <div class="subtitle">Configure how this facility connects to eAushadhi.</div>
+          </div>
+          <button class="drawer-close" id="close-drawer" title="Close">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+
+        <div class="drawer-body">
+
+          <!-- Institute Details -->
+          <div class="drawer-section">
+            <h4 class="drawer-section-title">Institute Details</h4>
+            <p class="drawer-section-sub">Identify the CARE facility and its corresponding eAushadhi credentials.</p>
+
+            <div class="field-group">
+              <div class="field-header"><label class="field-label">Facility <span class="required">*</span></label></div>
+              <select class="field">
+                <option>City General Hospital — Mumbai</option>
+                <option>District Hospital — Mysore</option>
+                <option>Rural PHC — Wayanad</option>
+                <option>Community Health Center — Kolar</option>
+              </select>
+              <div class="helper">The CARE facility this mapping applies to. One mapping per facility.</div>
+            </div>
+
+            <div class="field-group">
+              <div class="field-header"><label class="field-label">eAushadhi Institute ID <span class="required">*</span></label></div>
+              <input class="field" value="000931" placeholder="e.g. 000931" />
+              <div class="helper">The unique institute identifier registered with eAushadhi.</div>
+            </div>
+
+            <div class="field-group">
+              <div class="field-header"><label class="field-label">Schema Version</label></div>
+              <input class="field" value="1.0" placeholder="e.g. 1.0" />
+              <div class="helper">Defaults to the latest schema if left blank.</div>
+            </div>
+
+            <div class="field-group">
+              <div class="field-header"><label class="field-label">Credentials Reference <span class="required">*</span></label></div>
+              <input class="field" value="EAUSHADHI_SECRET_KEY_NAME_FORFACILITY1" placeholder="e.g. EAUSHADHI_SECRET_..." />
+              <div class="helper">Name of the secret in the credentials vault holding the eAushadhi API key. The actual key is never displayed.</div>
+            </div>
+          </div>
+
+          <!-- Supplier Mappings -->
+          <div class="drawer-section">
+            <h4 class="drawer-section-title">Supplier Mappings</h4>
+            <p class="drawer-section-sub">Map each CARE supplier to its eAushadhi warehouse name. The default supplier is auto-selected on the Fetch screen.</p>
+
+            <div id="supplier-rows">
+              <div class="supplier-row">
+                <div class="field-mini">
+                  <span class="mini-label">Supplier</span>
+                  <select class="field">
+                    <option>State Supplier</option>
+                    <option>District Supplier</option>
+                    <option>Local Pharmacy</option>
+                  </select>
+                </div>
+                <div class="field-mini">
+                  <span class="mini-label">eAushadhi Warehouse Name</span>
+                  <input class="field" value="Mysuru WH" placeholder="e.g. Mysuru WH" />
+                  <label class="same-as-supplier">
+                    <input type="checkbox" /> Same as supplier name
+                  </label>
+                </div>
+                <div class="default-toggle">
+                  <span class="mini-label">Default</span>
+                  <button class="default-radio selected" title="Mark as default"></button>
+                </div>
+                <button class="row-delete" title="Remove">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+                </button>
+              </div>
+
+              <div class="supplier-row">
+                <div class="field-mini">
+                  <span class="mini-label">Supplier</span>
+                  <select class="field">
+                    <option>District Supplier</option>
+                    <option>State Supplier</option>
+                    <option>Local Pharmacy</option>
+                  </select>
+                </div>
+                <div class="field-mini">
+                  <span class="mini-label">eAushadhi Warehouse Name</span>
+                  <input class="field" value="Bangalore WH" placeholder="e.g. Bangalore WH" />
+                  <label class="same-as-supplier">
+                    <input type="checkbox" /> Same as supplier name
+                  </label>
+                </div>
+                <div class="default-toggle">
+                  <span class="mini-label">Default</span>
+                  <button class="default-radio" title="Mark as default"></button>
+                </div>
+                <button class="row-delete" title="Remove">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+                </button>
+              </div>
+            </div>
+
+            <button class="add-supplier-btn" id="add-supplier-row">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add another supplier
+            </button>
+          </div>
+
+          <!-- Settings -->
+          <div class="drawer-section">
+            <h4 class="drawer-section-title">Settings</h4>
+            <p class="drawer-section-sub">Behavioural flags for this facility's inward workflow.</p>
+
+            <div class="toggle-row">
+              <div class="toggle-row-label">
+                <div class="title">Disable Inward Date</div>
+                <p class="toggle-helper">Lock the inward date to today — users won't be able to backdate fetches.</p>
+              </div>
+              <button class="toggle" data-flag="disable_inward_date"></button>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-row-label">
+                <div class="title">Allow Manual Addition</div>
+                <p class="toggle-helper">Let users add items not present in the eAushadhi inward response (useful for off-system stock).</p>
+              </div>
+              <button class="toggle on" data-flag="allow_manual_addition"></button>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="drawer-footer">
+          <button class="btn" id="cancel-drawer">Cancel</button>
+          <button class="btn btn-primary" id="save-mapping">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Save Mapping
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // Toggle product suggestion dropdowns
+  document.querySelectorAll('.product-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const wrap = btn.closest('.product-select');
+      const wasOpen = wrap.classList.contains('open');
+      // Close any others
+      document.querySelectorAll('.product-select.open').forEach(o => {
+        if (o !== wrap) {
+          // Remove suggestions list from others on close (only first row had it pre-rendered)
+          o.classList.remove('open');
+        }
+      });
+      if (wasOpen) {
+        wrap.classList.remove('open');
+      } else {
+        wrap.classList.add('open');
+        // If no suggestions yet, inject a default list
+        if (!wrap.querySelector('.suggestions')) {
+          const list = document.createElement('div');
+          list.className = 'suggestions';
+          list.innerHTML = `
+            <div class="suggestion selected">
+              <div class="s-name">${btn.textContent.trim()}</div>
+              <div class="s-cat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>Medicines</div>
+            </div>
+            <div class="suggestion"><div class="s-name">Paracetamol 500 mg Tablet</div><div class="s-cat">Medicines</div></div>
+            <div class="suggestion"><div class="s-name">Fluconazole 150 mg Tablet</div><div class="s-cat">Medicines</div></div>
+            <div class="suggestion"><div class="s-name">Ceftriaxone Injection 500 mg</div><div class="s-cat">Medicines</div></div>
+            <div class="suggestion"><div class="s-name">Lignocaine 2% Injection</div><div class="s-cat">Medicines</div></div>
+            <div class="suggestion"><div class="s-name">Ofloxacin 200 mg Tablet</div><div class="s-cat">Medicines</div></div>
+          `;
+          wrap.appendChild(list);
+        }
+      }
+    });
+  });
+
+  // Pick suggestion
+  document.addEventListener('click', (e) => {
+    const sugg = e.target.closest('.suggestion');
+    if (sugg) {
+      const wrap = sugg.closest('.product-select');
+      const name = sugg.querySelector('.s-name').textContent;
+      wrap.querySelector('.product-trigger').textContent = name;
+      wrap.classList.remove('open');
+      wrap.querySelectorAll('.suggestion').forEach(s => s.classList.remove('selected'));
+      sugg.classList.add('selected');
+      return;
+    }
+    // Click outside closes all
+    if (!e.target.closest('.product-select')) {
+      document.querySelectorAll('.product-select.open').forEach(o => o.classList.remove('open'));
+    }
+  });
+
+  // ============ Screen navigation ============
+  function goToScreen(n) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById('screen-' + n);
+    if (target) target.classList.add('active');
+    // Update stepper
+    document.querySelectorAll('#stepper .step-pill').forEach(p => {
+      const i = parseInt(p.dataset.go, 10);
+      p.classList.remove('current', 'done');
+      if (i === n) p.classList.add('current');
+      else if (i < n) p.classList.add('done');
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Generic data-go handlers (stepper + nav buttons)
+  document.addEventListener('click', (e) => {
+    const goBtn = e.target.closest('[data-go]');
+    if (goBtn) {
+      e.preventDefault();
+      goToScreen(parseInt(goBtn.dataset.go, 10));
+    }
+  });
+
+  // Wire up in-screen workflow buttons by text content
+  document.querySelectorAll('button, .view-btn').forEach(btn => {
+    const txt = (btn.textContent || '').trim().toLowerCase();
+    let target = null;
+    if (txt.startsWith('fetch from eaushadhi') && btn.closest('#screen-1')) target = 2;
+    else if (txt.startsWith('create delivery') && btn.closest('#screen-1')) target = 2;
+    else if (txt.includes('view details') && btn.closest('#screen-1')) target = 4;
+    else if (txt.startsWith('fetch') && btn.closest('#screen-2') && btn.classList.contains('btn-primary')) target = 3;
+    else if (txt.startsWith('save') && btn.closest('#screen-3')) target = 4;
+    else if (txt.startsWith('mark as approved') && btn.closest('#screen-4')) target = 5;
+    else if (txt.startsWith('receive & update stock') && btn.closest('#screen-5') && !btn.disabled) target = 6;
+    else if (txt.startsWith('confirm') && btn.closest('#screen-6')) target = 7;
+    else if (txt.startsWith('mark as completed') && btn.closest('#screen-7') && !btn.disabled) target = 1;
+    else if (txt === 'cancel' && btn.closest('#screen-6')) target = 5;
+
+    if (target !== null) {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        goToScreen(target);
+      });
+      btn.style.cursor = 'pointer';
+    }
+  });
+
+  // ============ Top-level flow tab toggle ============
+  document.querySelectorAll('#flow-tabs .flow-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const flow = tab.dataset.flow;
+      document.querySelectorAll('#flow-tabs .flow-tab').forEach(t => t.classList.toggle('active', t === tab));
+      document.querySelectorAll('.flow-section').forEach(s => {
+        s.classList.toggle('active', s.dataset.flow === flow);
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+
+  // ============ Admin drawer ============
+  const drawer = document.getElementById('mapping-drawer');
+  const drawerTitle = document.getElementById('drawer-title');
+  function openDrawer(mode) {
+    if (drawerTitle) drawerTitle.textContent = mode === 'edit' ? 'Edit Institute Mapping' : 'Add Institute Mapping';
+    drawer.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDrawer() {
+    drawer.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  const openBtn = document.getElementById('open-mapping-drawer');
+  if (openBtn) openBtn.addEventListener('click', () => openDrawer('add'));
+  document.querySelectorAll('.open-mapping-drawer-trigger').forEach(b => {
+    b.addEventListener('click', () => openDrawer('edit'));
+  });
+  ['close-drawer', 'cancel-drawer', 'save-mapping'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', closeDrawer);
+  });
+  // Click outside drawer body closes it
+  drawer.addEventListener('click', (e) => {
+    if (e.target === drawer) closeDrawer();
+  });
+
+  // ============ Settings toggles ============
+  document.querySelectorAll('.toggle[data-flag]').forEach(t => {
+    t.addEventListener('click', () => t.classList.toggle('on'));
+  });
+
+  // ============ Default supplier radio (mutually exclusive) ============
+  document.addEventListener('click', (e) => {
+    const radio = e.target.closest('.default-radio');
+    if (!radio) return;
+    const container = radio.closest('#supplier-rows');
+    if (!container) return;
+    container.querySelectorAll('.default-radio').forEach(r => r.classList.remove('selected'));
+    radio.classList.add('selected');
+  });
+
+  // ============ Add another supplier row ============
+  const addSupplierBtn = document.getElementById('add-supplier-row');
+  if (addSupplierBtn) {
+    addSupplierBtn.addEventListener('click', () => {
+      const wrap = document.getElementById('supplier-rows');
+      const row = document.createElement('div');
+      row.className = 'supplier-row';
+      row.innerHTML = `
+        <div class="field-mini">
+          <span class="mini-label">Supplier</span>
+          <select class="field">
+            <option>Local Pharmacy</option>
+            <option>State Supplier</option>
+            <option>District Supplier</option>
+          </select>
+        </div>
+        <div class="field-mini">
+          <span class="mini-label">eAushadhi Warehouse Name</span>
+          <input class="field synced" value="Local Pharmacy" readonly placeholder="e.g. Local WH" />
+          <label class="same-as-supplier">
+            <input type="checkbox" checked /> Same as supplier name
+          </label>
+        </div>
+        <div class="default-toggle">
+          <span class="mini-label">Default</span>
+          <button class="default-radio" title="Mark as default"></button>
+        </div>
+        <button class="row-delete" title="Remove">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+        </button>
+      `;
+      wrap.appendChild(row);
+    });
+  }
+
+  // Row delete in drawer
+  document.addEventListener('click', (e) => {
+    const del = e.target.closest('.supplier-row .row-delete');
+    if (!del) return;
+    const row = del.closest('.supplier-row');
+    const container = row.parentElement;
+    // Don't allow deleting the last row
+    if (container.querySelectorAll('.supplier-row').length > 1) {
+      row.remove();
+    }
+  });
+
+  // ============ "Same as supplier name" sync ============
+  function syncWarehouseToSupplier(row) {
+    const checkbox = row.querySelector('.same-as-supplier input[type="checkbox"]');
+    const supplierSelect = row.querySelector('.field-mini:first-child select');
+    const warehouseInput = row.querySelector('.field-mini:nth-child(2) input.field');
+    if (!checkbox || !supplierSelect || !warehouseInput) return;
+    if (checkbox.checked) {
+      warehouseInput.value = supplierSelect.value;
+      warehouseInput.readOnly = true;
+      warehouseInput.classList.add('synced');
+    } else {
+      warehouseInput.readOnly = false;
+      warehouseInput.classList.remove('synced');
+    }
+  }
+
+  document.addEventListener('change', (e) => {
+    // Checkbox toggled
+    if (e.target.matches('.same-as-supplier input[type="checkbox"]')) {
+      const row = e.target.closest('.supplier-row');
+      if (row) syncWarehouseToSupplier(row);
+      return;
+    }
+    // Supplier dropdown changed — re-sync if checkbox is checked
+    if (e.target.matches('.supplier-row .field-mini:first-child select')) {
+      const row = e.target.closest('.supplier-row');
+      if (row) syncWarehouseToSupplier(row);
+    }
+  });
+</script>
+</body>
+</html>
