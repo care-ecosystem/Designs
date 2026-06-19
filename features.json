@@ -1,6 +1,18 @@
 {
   "features": [
     {
+      "id": "eaushadhi-jharkhand",
+      "name": "eaushadhi jharkhand",
+      "description": "eaushadhi jharkhand integartion v1 draft",
+      "status": "Draft",
+      "dateAdded": "2026-06-19",
+      "path": "features/eaushadhi-jharkhand/index.html",
+      "tags": [
+        "eausahdhi",
+        "stock"
+      ]
+    },
+    {
       "id": "eaushadhi-v2",
       "name": "eaushadhi-v2",
       "description": "eaushadhi with inward fetch and admin screens",
