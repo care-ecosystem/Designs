@@ -1,6 +1,17 @@
 {
   "features": [
     {
+      "id": "radiology-updated",
+      "name": "radiology-updated flows",
+      "description": "radiology updated flows",
+      "status": "Draft",
+      "dateAdded": "2026-06-22",
+      "path": "features/radiology-updated/index.html",
+      "tags": [
+        "radiology"
+      ]
+    },
+    {
       "id": "eaushadhi-jharkhand",
       "name": "eaushadhi jharkhand",
       "description": "eaushadhi jharkhand integartion v1 draft",
