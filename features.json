@@ -1,6 +1,20 @@
 {
   "features": [
     {
+      "id": "radiology-e2e",
+      "name": "radiology e2e flow",
+      "description": "radiology e2e flows",
+      "status": "Draft",
+      "dateAdded": "2026-06-25",
+      "path": "features/radiology-e2e/index.html",
+      "tags": [
+        "radiology",
+        "e2e",
+        "ui",
+        "flows"
+      ]
+    },
+    {
       "id": "dashboard-hmis-v1",
       "name": "dashboard-hmis-v1",
       "description": "dashboard-hmis-v1",
