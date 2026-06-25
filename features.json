@@ -1,6 +1,30 @@
 {
   "features": [
     {
+      "id": "dashboard-hmis-v1",
+      "name": "dashboard-hmis-v1",
+      "description": "dashboard-hmis-v1",
+      "status": "Draft",
+      "dateAdded": "2026-06-25",
+      "path": "features/dashboard-hmis-v1/index.html",
+      "tags": [
+        "dashboard",
+        "hmis"
+      ]
+    },
+    {
+      "id": "dashboard-clinical-v1",
+      "name": "dashboard-clinical-v1",
+      "description": "dashboard-clinical-v1",
+      "status": "Draft",
+      "dateAdded": "2026-06-25",
+      "path": "features/dashboard-clinical-v1/index.html",
+      "tags": [
+        "dashboard",
+        "clinical"
+      ]
+    },
+    {
       "id": "radiology-updated",
       "name": "radiology-updated flows",
       "description": "radiology updated flows",

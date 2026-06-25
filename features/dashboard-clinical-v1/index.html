@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CARE-HMIS — Clinical Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0D1F3C;--blue:#1565C0;--teal:#00695C;--green:#1B5E20;
+  --amber:#E65100;--red:#B71C1C;--purple:#4527A0;--gray:#374151;
+  --muted:#6B7280;--light:#9CA3AF;--border:#E5E7EB;--bg:#F7F8FA;--white:#fff;
+}
+body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;background:var(--bg);color:var(--navy)}
+button,select{font-family:inherit;cursor:pointer}
+
+/* ── TOPBAR ── */
+#topbar{background:var(--navy);padding:0 20px;height:50px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:400;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.tb-left{display:flex;align-items:center;gap:14px}
+.tb-title{font-size:14px;font-weight:700;color:#fff}
+.tb-sub{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px}
+.planned-pill{font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.55);letter-spacing:.05em;border:1px solid rgba(255,255,255,.15)}
+.tb-right{display:flex;align-items:center;gap:8px}
+
+.role-toggle{display:flex;background:rgba(255,255,255,.1);border-radius:6px;padding:2px;gap:1px}
+.rt-btn{font-size:11.5px;font-weight:500;padding:5px 13px;border-radius:4px;color:rgba(255,255,255,.5);border:none;background:none;cursor:pointer;transition:all .18s;white-space:nowrap}
+.rt-btn.on{background:#fff;color:var(--navy);font-weight:700}
+
+.doc-filter{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border-radius:6px;padding:4px 10px;border:1px solid rgba(255,255,255,.15)}
+.doc-filter label{font-size:11px;color:rgba(255,255,255,.45);white-space:nowrap}
+.doc-sel{font-size:12px;background:transparent;color:#fff;border:none;outline:none;cursor:pointer}
+.doc-sel option{background:var(--navy);color:#fff}
+
+.period-sel{font-size:12px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:5px;padding:5px 10px;outline:none}
+.period-sel option{background:var(--navy)}
+
+/* ── PAGE ── */
+.page{padding:0 20px 40px;max-width:1320px;margin:0 auto}
+
+/* ── SECTION ── */
+.section{margin-top:24px}
+.sec-hdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--navy)}
+.sec-title{font-size:13px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.07em}
+.sec-meta{font-size:11.5px;color:var(--muted);font-style:italic}
+
+/* ── SUMMARY STRIP ── */
+.sum-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.sum-cell{background:#fff;padding:14px 13px}
+.sum-lbl{font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.sum-val{font-size:26px;font-weight:300;color:var(--navy);line-height:1;font-variant-numeric:tabular-nums}
+.sum-note{font-size:11px;color:var(--muted);margin-top:4px}
+.sum-delta{font-size:11px;font-weight:600;margin-top:4px}
+.up{color:var(--green)}.dn{color:var(--red)}
+.sum-alert{color:var(--red);font-weight:600}
+
+/* ── GRID LAYOUTS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+
+/* ── CARD ── */
+.card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.card-title{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:3px}
+.card-sub{font-size:11px;color:var(--muted);margin-bottom:10px}
+.card-btn{font-size:11px;font-weight:600;padding:3px 10px;border-radius:5px;border:1px solid var(--border);background:#fff;color:var(--blue);cursor:pointer;float:right;margin-left:8px;transition:all .15s}
+.card-btn:hover{background:#E3F2FD;border-color:var(--blue)}
+
+/* ── QUEUE TABLE ── */
+.qtbl{width:100%;border-collapse:collapse;font-size:12px}
+.qtbl th{padding:6px 8px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border);text-align:left;background:#FAFAFA}
+.qtbl td{padding:8px 8px;border-bottom:1px solid #F0F0F0;vertical-align:middle}
+.qtbl tr:last-child td{border-bottom:none}
+.qtbl tr.click:hover td{background:#EEF6FF;cursor:pointer}
+.wbadge{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px}
+.w-ok{background:#E8F5E9;color:var(--green)}.w-warn{background:#FFF3E0;color:var(--amber)}.w-late{background:#FFEBEE;color:var(--red)}
+.sdot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px}
+
+/* ── HBAR ── */
+.hrow{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F0F0F0;cursor:pointer;transition:all .15s;border-radius:3px}
+.hrow:last-child{border-bottom:none}
+.hrow:hover{background:#F4F8FF;padding-left:4px}
+.hrow-rank{font-size:10.5px;color:var(--muted);width:18px;flex-shrink:0}
+.hrow-name{font-size:12.5px;flex:1;line-height:1.35}
+.hrow-track{width:90px;height:7px;background:#EEEEEE;border-radius:3px;overflow:hidden;flex-shrink:0}
+.hrow-fill{height:100%;border-radius:3px}
+.hrow-val{font-size:12.5px;font-weight:600;width:40px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
+.hrow-arr{font-size:13px;color:var(--light);flex-shrink:0}
+.warn-tag{font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:#FFEBEE;color:var(--red);flex-shrink:0}
+.preg-tag{font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:#EDE7F6;color:var(--purple);flex-shrink:0}
+
+/* ── AGE GENDER ── */
+.ag-tabs{display:flex;gap:4px;margin-bottom:10px}
+.ag-tab{font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;transition:all .15s}
+.ag-tab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+.age-row{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #F0F0F0}
+.age-row:last-child{border-bottom:none}
+.age-lbl{font-size:10.5px;color:var(--muted);width:40px;flex-shrink:0;text-align:center}
+.age-m{height:7px;border-radius:2px;background:var(--blue)}
+.age-f{height:7px;border-radius:2px;background:var(--red)}
+.age-num{font-size:10px;color:var(--muted);width:28px;flex-shrink:0}
+
+.risk-strip{display:flex;gap:1px;margin-top:10px;border-radius:6px;overflow:hidden}
+.risk-box{flex:1;padding:9px 10px;text-align:center}
+.risk-num{font-size:20px;font-weight:300;line-height:1}
+.risk-lbl{font-size:10px;color:rgba(255,255,255,.75);margin-top:3px}
+
+/* ── PATIENT TAGS ── */
+.ptag-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F0F0F0;cursor:pointer;transition:all .15s}
+.ptag-row:last-child{border-bottom:none}
+.ptag-row:hover{background:#F4F8FF;padding-left:4px}
+.ptag-chip{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:12px;width:48px;text-align:center;flex-shrink:0}
+.ptag-track{flex:1;height:9px;background:#EEEEEE;border-radius:4px;overflow:hidden}
+.ptag-fill{height:100%;border-radius:4px}
+.ptag-val{font-size:12.5px;font-weight:600;width:40px;text-align:right;flex-shrink:0}
+.ptag-ch{font-size:11.5px;font-weight:600;width:42px;text-align:right;flex-shrink:0}
+
+/* ── BED BOARD ── */
+.bed-stats{display:flex;gap:8px;margin-bottom:12px}
+.bed-stat{flex:1;background:var(--bg);border-radius:6px;padding:9px;text-align:center;border:1px solid var(--border)}
+.bed-stat-n{font-size:22px;font-weight:300;line-height:1}
+.bed-stat-l{font-size:10.5px;color:var(--muted);margin-top:3px}
+.bed-grid{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.bed{font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;border:1px solid;cursor:default}
+.b-occ{background:#FFF8E1;border-color:#F9A825;color:#7B3500}
+.b-free{background:#E8F5E9;border-color:#66BB6A;color:var(--green)}
+.b-crit{background:#FFEBEE;border-color:#EF5350;color:var(--red)}
+.bed-legend{display:flex;gap:10px;margin-top:8px;font-size:11px;color:var(--muted);flex-wrap:wrap}
+
+/* ── LAMA ── */
+.lama-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F0F0F0}
+.lama-row:last-child{border-bottom:none}
+.lama-name{font-size:12.5px;flex:1}
+.lama-track{width:80px;height:7px;background:#EEEEEE;border-radius:3px;overflow:hidden;flex-shrink:0}
+.lama-fill{height:100%;border-radius:3px}
+.lama-val{font-size:12.5px;font-weight:600;width:40px;text-align:right}
+.lama-badge{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;width:36px;text-align:center}
+.lb-ok{background:#E8F5E9;color:var(--green)}.lb-warn{background:#FFF3E0;color:var(--amber)}.lb-bad{background:#FFEBEE;color:var(--red)}
+
+/* ── DISCHARGE OUTCOMES ── */
+.outcome-strip{display:flex;height:12px;border-radius:4px;overflow:hidden;gap:1px;margin:10px 0 8px;cursor:pointer}
+.outcome-legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11.5px;color:var(--muted)}
+.ol-item{display:flex;align-items:center;gap:5px}
+.ol-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.mini-kpis{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.mk{background:var(--bg);border-radius:6px;padding:9px 12px;flex:1;min-width:80px;border:1px solid var(--border)}
+.mk-n{font-size:22px;font-weight:300;line-height:1}
+.mk-l{font-size:10.5px;color:var(--muted);margin-top:3px}
+
+.ds-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F0F0F0}
+.ds-row:last-child{border-bottom:none}
+.ds-name{font-size:12.5px;flex:1}
+.ds-track{flex:1;height:8px;background:#EEEEEE;border-radius:3px;overflow:hidden;max-width:90px}
+.ds-fill{height:100%;border-radius:3px}
+.ds-pct{font-size:12.5px;font-weight:600;width:34px;text-align:right}
+.ds-badge{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px}
+.db-ok{background:#E8F5E9;color:var(--green)}.db-warn{background:#FFF3E0;color:var(--amber)}.db-bad{background:#FFEBEE;color:var(--red)}
+
+.comp-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #F0F0F0}
+.comp-row:last-child{border-bottom:none}
+.comp-lbl{font-size:12px;flex:1}
+.comp-track{flex:1;height:9px;background:#EEEEEE;border-radius:4px;overflow:hidden}
+.comp-fill{height:100%;border-radius:4px}
+.comp-pct{font-size:12px;font-weight:600;width:36px;text-align:right}
+
+/* ── LAB / RADIO ── */
+.lr-stat{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.lr-box{background:var(--bg);border-radius:6px;padding:10px 13px;flex:1;min-width:100px;border:1px solid var(--border)}
+.lr-n{font-size:22px;font-weight:300;line-height:1}
+.lr-l{font-size:10.5px;color:var(--muted);margin-top:3px}
+.lr-delta{font-size:11px;font-weight:600;margin-top:3px}
+
+.type-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F0F0F0}
+.type-row:last-child{border-bottom:none}
+.type-name{font-size:12.5px;flex:1}
+.type-bar{flex:1;height:14px;background:#EEEEEE;border-radius:3px;overflow:hidden;max-width:100px}
+.type-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:7px;font-size:11px;font-weight:700;color:#fff}
+.type-count{font-size:12.5px;font-weight:600;width:50px;text-align:right}
+.type-tat{font-size:11.5px;width:55px;text-align:right}
+
+/* ── MEDICATIONS ── */
+.mini-kpis{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+
+/* ── DRILL PANEL ── */
+.drill{display:none;border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:7px;margin-top:12px;overflow:hidden;animation:slideIn .2s ease}
+.drill.open{display:block}
+@keyframes slideIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.drill-hdr{background:#EEF6FF;padding:9px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #BBDEFB}
+.drill-bc{font-size:12px;font-weight:600;color:var(--blue)}
+.drill-close{font-size:11.5px;padding:3px 9px;border-radius:4px;border:1px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;transition:all .15s}
+.drill-close:hover{background:#FFEBEE;color:var(--red)}
+.drill-body{padding:14px}
+.dp2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dp-panel{background:var(--bg);border-radius:6px;padding:12px;border:1px solid var(--border)}
+.dp-title{font-size:12.5px;font-weight:700;margin-bottom:9px}
+.dp-note{font-size:11.5px;color:var(--muted);background:var(--bg);border-radius:5px;padding:8px 10px;margin-top:10px;border:1px solid var(--border);line-height:1.55}
+.dp-note.warn{background:#FFF3E0;border-color:#FFCC80;color:var(--amber)}
+.dp-note.bad{background:#FFEBEE;border-color:#FECACA;color:var(--red)}
+.dp-note.info{background:#EEF6FF;border-color:#BBDEFB;color:var(--blue)}
+
+/* ── TAG DRILL OVERLAY ── */
+.tag-overlay{display:none;position:fixed;inset:0;background:rgba(13,31,60,.45);z-index:500;align-items:center;justify-content:center}
+.tag-overlay.show{display:flex}
+.tag-modal{background:#fff;border-radius:10px;padding:24px;width:420px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.tag-modal h3{font-size:14px;font-weight:700;margin-bottom:14px;color:var(--navy)}
+.tag-modal-close{float:right;font-size:11.5px;padding:3px 9px;border-radius:4px;border:1px solid var(--border);background:#fff;color:var(--muted);cursor:pointer}
+.tag-modal-close:hover{background:#FFEBEE;color:var(--red)}
+
+/* ── PATIENT DRILL OVERLAY ── */
+.pt-overlay{display:none;position:fixed;inset:0;background:rgba(13,31,60,.45);z-index:500;align-items:center;justify-content:center}
+.pt-overlay.show{display:flex}
+.pt-modal{background:#fff;border-radius:10px;padding:0;width:480px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden}
+.pt-hdr{background:var(--navy);padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
+.pt-hdr h3{font-size:13px;font-weight:700;color:#fff}
+.pt-hdr-close{font-size:11.5px;padding:3px 9px;border-radius:4px;border:1px solid rgba(255,255,255,.3);background:transparent;color:rgba(255,255,255,.7);cursor:pointer}
+.pt-hdr-close:hover{background:rgba(255,255,255,.1)}
+.pt-body{padding:16px 18px}
+.pt-row{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #F0F0F0;font-size:12.5px}
+.pt-row:last-child{border-bottom:none}
+.pt-lbl{color:var(--muted);width:130px;flex-shrink:0}
+.pt-val{font-weight:500;flex:1}
+
+.badge{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px}
+.b-g{background:#E8F5E9;color:var(--green)}.b-m{background:#FFF3E0;color:var(--amber)}
+.b-b{background:#FFEBEE;color:var(--red)}.b-i{background:#E3F2FD;color:var(--blue)}.b-p{background:#EDE7F6;color:var(--purple)}
+
+footer{background:#fff;border-top:1px solid var(--border);padding:10px 20px;display:flex;justify-content:space-between;margin-top:16px}
+footer span{font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- TAG DRILL OVERLAY (fix: was no-op) -->
+<div class="tag-overlay" id="tagOverlay" onclick="if(event.target===this)closeTagOverlay()">
+  <div class="tag-modal">
+    <button class="tag-modal-close" onclick="closeTagOverlay()">✕ Close</button>
+    <h3 id="tagModalTitle">Tag breakdown</h3>
+    <div id="tagModalBody"></div>
+  </div>
+</div>
+
+<!-- PATIENT DRILL OVERLAY (fix: was just re-opening queue drill) -->
+<div class="pt-overlay" id="ptOverlay" onclick="if(event.target===this)closePtOverlay()">
+  <div class="pt-modal">
+    <div class="pt-hdr">
+      <h3 id="ptModalTitle">Patient Encounter</h3>
+      <button class="pt-hdr-close" onclick="closePtOverlay()">✕ Close</button>
+    </div>
+    <div class="pt-body" id="ptModalBody"></div>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="tb-left">
+    <div>
+      <div class="tb-title">CARE-HMIS — Clinical Dashboard</div>
+      <div class="tb-sub">Sadar Ramgarh DH · Ramgarh District · Dashboard 2 of 3</div>
+    </div>
+    <span class="planned-pill">PLANNED</span>
+  </div>
+  <div class="tb-right">
+    <div class="role-toggle">
+      <button class="rt-btn on" onclick="setRole('facility')">Facility view</button>
+      <button class="rt-btn" onclick="setRole('dept')">Department view</button>
+      <button class="rt-btn" onclick="setRole('doctor')">Doctor view</button>
+    </div>
+    <div class="doc-filter" id="doc-filter" style="display:none">
+      <label>Doctor:</label>
+      <select class="doc-sel" onchange="setDoctor(this.value)">
+        <option value="all">All doctors</option>
+        <option value="priya">Dr. Priya Sharma</option>
+        <option value="asha">Dr. Asha Kumari</option>
+        <option value="rekha">Dr. Rekha Gupta</option>
+        <option value="nirmala">Dr. Nirmala Devi</option>
+      </select>
+    </div>
+    <select class="period-sel" onchange="setPeriod(this.value)">
+      <option value="today">Today</option>
+      <option value="week">This week</option>
+      <option value="month" selected>May 2026</option>
+    </select>
+  </div>
+</div>
+
+<div class="page">
+
+<!-- SUMMARY -->
+<div class="section">
+  <div class="sec-hdr">
+    <span class="sec-title">Summary</span>
+    <span class="sec-meta" id="sum-meta">Sadar Ramgarh DH · May 2026 · Facility level</span>
+  </div>
+  <div class="sum-strip">
+    <div class="sum-cell">
+      <div class="sum-lbl">OPD queue today</div>
+      <div class="sum-val" id="s-queue">14</div>
+      <div class="sum-note">3 waiting · 2 in consult</div>
+    </div>
+    <div class="sum-cell">
+      <div class="sum-lbl">Active inpatients</div>
+      <div class="sum-val" id="s-ip">28</div>
+      <div class="sum-note">OB/GYN ward · 18 beds occupied</div>
+    </div>
+    <div class="sum-cell">
+      <div class="sum-lbl">Avg diagnoses / consult</div>
+      <div class="sum-val" id="s-diag">2.3</div>
+      <div class="sum-delta up">↑ 0.2 vs last month</div>
+    </div>
+    <div class="sum-cell">
+      <div class="sum-lbl">Discharge summaries</div>
+      <div class="sum-val sum-alert" id="s-ds">61%</div>
+      <div class="sum-note">pending: 11 overdue</div>
+    </div>
+    <div class="sum-cell">
+      <div class="sum-lbl">OPD avg wait time</div>
+      <div class="sum-val" id="s-wait-opd">6.9<span style="font-size:14px;font-weight:400"> min</span></div>
+      <div class="sum-delta up">↓ 0.2 vs last week</div>
+    </div>
+    <div class="sum-cell">
+      <div class="sum-lbl">IPD avg length of stay</div>
+      <div class="sum-val" id="s-alos">5.4<span style="font-size:14px;font-weight:400"> days</span></div>
+      <div class="sum-delta up">↓ 0.1 vs last month</div>
+    </div>
+  </div>
+</div>
+
+<!-- OPD -->
+<div class="section">
+  <div class="sec-hdr">
+    <span class="sec-title">OPD</span>
+    <span class="sec-meta" id="opd-meta">May 2026 · Sadar Ramgarh DH · Click rows to drill down</span>
+  </div>
+
+  <div class="g21" style="margin-bottom:12px">
+    <!-- Consultation Queue -->
+    <div class="card">
+      <button class="card-btn" onclick="openQueueDrill()">Facility → Dept → Doctor ↓</button>
+      <div class="card-title">Consultation Queue</div>
+      <div class="card-sub" id="queue-sub">Today · Sadar Ramgarh DH · Click patient to open encounter</div>
+      <table class="qtbl">
+        <thead><tr><th>Patient ID</th><th>Dept</th><th>Wait</th><th>Status</th><th>Last visit diagnosis</th></tr></thead>
+        <tbody id="queue-tbody"></tbody>
+      </table>
+      <div class="drill" id="drill-queue">
+        <div class="drill-hdr">
+          <div class="drill-bc" id="drill-queue-bc">Queue drill down</div>
+          <button class="drill-close" onclick="closeDrill('drill-queue')">← Back</button>
+        </div>
+        <div class="drill-body" id="drill-queue-body"></div>
+      </div>
+    </div>
+
+    <!-- OPD by Patient Tag -->
+    <div class="card">
+      <div class="card-title">OPD Encounters by Patient Tag</div>
+      <div class="card-sub" id="tag-meta">May 2026 · Sadar Ramgarh DH · Click tag for facility breakdown</div>
+      <div id="opd-tags"></div>
+    </div>
+  </div>
+
+  <!-- Top 10 OPD Diagnoses -->
+  <div class="card">
+    <button class="card-btn" onclick="toggleAgView('opd')">Age &amp; Gender view</button>
+    <div class="card-title">Top 10 OPD Diagnoses</div>
+    <div class="card-sub">May 2026 · Sadar Ramgarh DH · Click diagnosis to drill · Pregnancy diagnoses show risk stratification</div>
+    <div class="g2" style="margin-top:6px">
+      <div>
+        <div id="opd-diag-list"></div>
+        <div class="drill" id="drill-opd-diag">
+          <div class="drill-hdr">
+            <div class="drill-bc" id="drill-opd-diag-bc">Diagnosis drill</div>
+            <button class="drill-close" onclick="closeDrill('drill-opd-diag')">← Back</button>
+          </div>
+          <div class="drill-body" id="drill-opd-diag-body"></div>
+        </div>
+      </div>
+      <div id="opd-ag-panel" style="display:none">
+        <div class="ag-tabs">
+          <button class="ag-tab on" onclick="setAgTab('opd','age',this)">By age group</button>
+          <button class="ag-tab" onclick="setAgTab('opd','gender',this)">By gender</button>
+        </div>
+        <div id="opd-age-view"></div>
+        <div id="opd-gender-view" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- IPD -->
+<div class="section">
+  <div class="sec-hdr">
+    <span class="sec-title">IPD</span>
+    <span class="sec-meta" id="ipd-meta">May 2026 · Sadar Ramgarh DH</span>
+  </div>
+
+  <div class="g2" style="margin-bottom:12px">
+    <!-- Ward Bed Board -->
+    <div class="card">
+      <div class="card-title">Ward Bed Board — OB/GYN</div>
+      <div class="card-sub">18 beds · live status · click bed for patient detail</div>
+      <div class="bed-stats" id="bed-stats"></div>
+      <div class="bed-grid" id="bed-grid"></div>
+      <div class="bed-legend">
+        <span><span class="bed b-occ" style="padding:1px 6px;font-size:10px">■</span> Occupied</span>
+        <span><span class="bed b-free" style="padding:1px 6px;font-size:10px">■</span> Free</span>
+        <span><span class="bed b-crit" style="padding:1px 6px;font-size:10px">■</span> Critical</span>
+      </div>
+    </div>
+
+    <!-- LAMA + IPD Tags -->
+    <div class="card">
+      <div class="card-title">LAMA Rate — by Doctor</div>
+      <div class="card-sub">Left Against Medical Advice · clinical accountability · May 2026</div>
+      <div id="lama-rows"></div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid #F0F0F0">
+        <div class="card-title" style="margin-bottom:4px">IPD by Patient Tags</div>
+        <div class="card-sub" style="margin-bottom:8px">Inpatient encounters · May 2026</div>
+        <div id="ipd-tags"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top 10 IPD Diagnoses -->
+  <div class="card" style="margin-bottom:12px">
+    <button class="card-btn" onclick="toggleAgView('ipd')">Age &amp; Gender view</button>
+    <div class="card-title">Top 10 IPD Diagnoses</div>
+    <div class="card-sub">Inpatient admissions · May 2026 · click to drill by dept / doctor</div>
+    <div class="g2" style="margin-top:6px">
+      <div>
+        <div id="ipd-diag-list"></div>
+        <!-- FIX: IPD now has its own drill panel -->
+        <div class="drill" id="drill-ipd-diag">
+          <div class="drill-hdr">
+            <div class="drill-bc" id="drill-ipd-diag-bc">IPD Diagnosis drill</div>
+            <button class="drill-close" onclick="closeDrill('drill-ipd-diag')">← Back</button>
+          </div>
+          <div class="drill-body" id="drill-ipd-diag-body"></div>
+        </div>
+      </div>
+      <div id="ipd-ag-panel" style="display:none">
+        <div class="ag-tabs">
+          <button class="ag-tab on" onclick="setAgTab('ipd','age',this)">By age group</button>
+          <button class="ag-tab" onclick="setAgTab('ipd','gender',this)">By gender</button>
+        </div>
+        <div id="ipd-age-view"></div>
+        <div id="ipd-gender-view" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Discharge Outcomes -->
+  <div class="g3">
+    <div class="card">
+      <div class="card-title">Discharge Outcomes</div>
+      <div class="card-sub">All inpatient discharges · May 2026</div>
+      <div class="mini-kpis" id="outcome-mini"></div>
+      <div class="outcome-strip" id="outcome-strip" onclick="openOutcomeDrill()"></div>
+      <div class="outcome-legend" id="outcome-legend"></div>
+      <div class="drill" id="drill-outcome">
+        <div class="drill-hdr">
+          <div class="drill-bc" id="drill-outcome-bc">Outcomes</div>
+          <button class="drill-close" onclick="closeDrill('drill-outcome')">← Back</button>
+        </div>
+        <div class="drill-body" id="drill-outcome-body"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Discharge Summary Completion</div>
+      <div class="card-sub">By doctor · OB/GYN · accountability view · May 2026</div>
+      <div id="ds-rows"></div>
+      <div class="dp-note bad" style="margin-top:10px">⚠ 11 summaries overdue — patients discharged &gt;48 hrs ago with no summary</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Vitals &amp; Documentation Compliance</div>
+      <div class="card-sub">Today · OB/GYN inpatients · missing = requires action</div>
+      <div id="comp-rows"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MEDICATIONS -->
+<div class="section">
+  <div class="sec-hdr">
+    <span class="sec-title">Medications</span>
+    <span class="sec-meta">May 2026 · procurement signal · all departments</span>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <button class="card-btn" onclick="openMedDrill()">Drill by dept ↓</button>
+      <div class="card-title">Top 10 Medications Requested</div>
+      <div class="card-sub">All encounters · May 2026 · ranked by prescription count</div>
+      <div id="med-list"></div>
+      <div class="drill" id="drill-med">
+        <div class="drill-hdr">
+          <div class="drill-bc">Medications · Department breakdown</div>
+          <button class="drill-close" onclick="closeDrill('drill-med')">← Back</button>
+        </div>
+        <div class="drill-body" id="drill-med-body"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Top 3 Medications per Department</div>
+      <div class="card-sub">Most prescribed drugs by department · May 2026</div>
+      <div id="dept-meds"></div>
+      <div style="margin-top:14px;padding-top:10px;border-top:1px solid #F0F0F0">
+        <div class="card-title" style="margin-bottom:5px">Polypharmacy Metrics</div>
+        <div class="card-sub" style="margin-bottom:8px">Quality signal · May 2026</div>
+        <div class="mini-kpis">
+          <div class="mk"><div class="mk-n">3.2</div><div class="mk-l">Avg meds / encounter</div></div>
+          <div class="mk"><div class="mk-n">2.8</div><div class="mk-l">Avg meds / prescription</div></div>
+          <div class="mk"><div class="mk-n" style="color:var(--red)">12%</div><div class="mk-l">Rx without diagnosis</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LAB & RADIOLOGY -->
+<div class="section">
+  <div class="sec-hdr">
+    <span class="sec-title">Lab &amp; Radiology</span>
+    <span class="sec-meta">May 2026 · Sadar Ramgarh DH · turnaround time · request volumes</span>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Lab Requests — by Test Type</div>
+      <div class="card-sub">Total issued this month · avg turnaround time · target &lt; 6 hrs</div>
+      <div class="lr-stat" id="lab-stat"></div>
+      <div id="lab-types"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Radiology — by Modality</div>
+      <div class="card-sub">Total reports issued · avg turnaround time · target &lt; 6 hrs</div>
+      <div class="lr-stat" id="radio-stat"></div>
+      <div id="radio-types"></div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid #F0F0F0">
+        <div class="card-title" style="margin-bottom:5px;font-size:12.5px">Pending requests — by dept</div>
+        <div id="pending-reqs"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- .page -->
+
+<footer>
+  <span>CARE-HMIS Clinical Dashboard · Dashboard 2 of 3 · Sadar Ramgarh DH · Ramgarh District · All data illustrative · PRD to be written</span>
+  <span>Data source: CARE FHIR R5 · Phase: Planned</span>
+</footer>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────────────────
+const QUEUE=[
+  {id:'PT-00847',dept:'OB/GYN',wait:4,status:'Waiting',last:'ANC routine',age:24,risk:'Low',abha:'ABHA-4821-0032',consult:'Dr. Priya Sharma'},
+  {id:'PT-00912',dept:'OB/GYN',wait:12,status:'Waiting',last:'C-section follow-up',age:29,risk:'Medium',abha:'ABHA-3910-1122',consult:'Dr. Asha Kumari'},
+  {id:'PT-00731',dept:'OB/GYN',wait:3,status:'In consult',last:'Preeclampsia',age:32,risk:'High',abha:'ABHA-7310-4401',consult:'Dr. Priya Sharma'},
+  {id:'PT-01044',dept:'OB/GYN',wait:18,status:'Waiting',last:'Gestational diabetes',age:27,risk:'Medium',abha:'ABHA-1044-9921',consult:'Dr. Rekha Gupta'},
+  {id:'PT-00883',dept:'OB/GYN',wait:6,status:'Waiting',last:'Anaemia in pregnancy',age:22,risk:'Medium',abha:'ABHA-8830-5512',consult:'Dr. Nirmala Devi'},
+];
+const OPD_DIAGS=[
+  {n:'Anaemia in pregnancy',v:1040,pct:100,col:'#0D1F3C',preg:true,warn:false},
+  {n:'Normal delivery',v:817,pct:79,col:'#0D1F3C',preg:true,warn:false},
+  {n:'Caesarean section',v:669,pct:64,col:'#B71C1C',preg:true,warn:true},
+  {n:'ANC routine',v:520,pct:50,col:'#0D1F3C',preg:true,warn:false},
+  {n:'Gestational diabetes',v:297,pct:29,col:'#0D1F3C',preg:true,warn:false},
+  {n:'Upper respiratory infection',v:264,pct:25,col:'#374151',preg:false,warn:false},
+  {n:'Preeclampsia',v:223,pct:21,col:'#4527A0',preg:true,warn:false},
+  {n:'Malaria (confirmed)',v:172,pct:17,col:'#374151',preg:false,warn:false},
+  {n:'Dengue fever',v:141,pct:14,col:'#374151',preg:false,warn:false},
+  {n:'Diarrhoeal disease',v:110,pct:11,col:'#374151',preg:false,warn:false},
+];
+const IPD_DIAGS=[
+  {n:'Normal delivery (complex)',v:312,pct:100,col:'#1565C0'},
+  {n:'Caesarean section',v:188,pct:60,col:'#B71C1C',warn:true},
+  {n:'Anaemia in pregnancy',v:134,pct:43,col:'#1565C0'},
+  {n:'Preeclampsia / eclampsia',v:89,pct:29,col:'#4527A0'},
+  {n:'Malaria — severe',v:47,pct:15,col:'#1565C0'},
+  {n:'Pneumonia',v:38,pct:12,col:'#1565C0'},
+  {n:'Dengue (hospitalised)',v:29,pct:9,col:'#1565C0'},
+  {n:'Diabetic emergency',v:23,pct:7,col:'#E65100'},
+  {n:'Road traffic accident',v:18,pct:6,col:'#374151'},
+  {n:'Postpartum haemorrhage',v:14,pct:4,col:'#B71C1C'},
+];
+const OPD_TAGS=[
+  {tag:'JSY',val:481,pct:100,col:'#1565C0',bg:'#E3F2FD',fc:'#0D47A1',ch:'+12%',up:true,
+    note:'Janani Suraksha Yojana — institutional delivery incentive',
+    breakdown:[{f:'Sadar Ramgarh DH',v:310},{f:'CHC Mandu',v:98},{f:'CHC Gola',v:73}]},
+  {tag:'ANC',val:298,pct:62,col:'#4527A0',bg:'#EDE7F6',fc:'#4527A0',ch:'+3%',up:true,
+    note:'Antenatal Care visits — tracked per trimester',
+    breakdown:[{f:'Sadar Ramgarh DH',v:188},{f:'CHC Mandu',v:64},{f:'CHC Gola',v:46}]},
+  {tag:'BPL',val:121,pct:25,col:'#E65100',bg:'#FFF3E0',fc:'#BF360C',ch:'-4%',up:false,
+    note:'Below Poverty Line — eligible for free treatment',
+    breakdown:[{f:'Sadar Ramgarh DH',v:72},{f:'CHC Mandu',v:31},{f:'CHC Gola',v:18}]},
+  {tag:'TB',val:44,pct:9,col:'#9E9E9E',bg:'#F5F5F5',fc:'#424242',ch:'0%',up:null,
+    note:'Tuberculosis patients — DOTS compliance tracking',
+    breakdown:[{f:'Sadar Ramgarh DH',v:28},{f:'CHC Mandu',v:10},{f:'CHC Gola',v:6}]},
+  {tag:'MLC',val:18,pct:4,col:'#00695C',bg:'#E0F2F1',fc:'#004D40',ch:'+2',up:true,
+    note:'Medico-Legal Case — police report required',
+    breakdown:[{f:'Sadar Ramgarh DH',v:14},{f:'CHC Mandu',v:3},{f:'CHC Gola',v:1}]},
+];
+const IPD_TAGS=[
+  {tag:'JSY',val:139,pct:100,col:'#1565C0',bg:'#E3F2FD',fc:'#0D47A1',ch:'+7%',up:true,
+    breakdown:[{f:'Sadar Ramgarh DH',v:92},{f:'CHC Mandu',v:28},{f:'CHC Gola',v:19}]},
+  {tag:'JSSK',val:82,pct:59,col:'#00695C',bg:'#E0F2F1',fc:'#004D40',ch:'+5%',up:true,
+    note:'Janani Shishu Suraksha Karyakram — free maternity care',
+    breakdown:[{f:'Sadar Ramgarh DH',v:54},{f:'CHC Mandu',v:18},{f:'CHC Gola',v:10}]},
+  {tag:'ANC',val:64,pct:46,col:'#4527A0',bg:'#EDE7F6',fc:'#4527A0',ch:'+2%',up:true,
+    breakdown:[{f:'Sadar Ramgarh DH',v:41},{f:'CHC Mandu',v:15},{f:'CHC Gola',v:8}]},
+  {tag:'BPL',val:38,pct:27,col:'#E65100',bg:'#FFF3E0',fc:'#BF360C',ch:'-3%',up:false,
+    breakdown:[{f:'Sadar Ramgarh DH',v:24},{f:'CHC Mandu',v:9},{f:'CHC Gola',v:5}]},
+  {tag:'TB',val:12,pct:9,col:'#9E9E9E',bg:'#F5F5F5',fc:'#424242',ch:'0%',up:null,
+    breakdown:[{f:'Sadar Ramgarh DH',v:8},{f:'CHC Mandu',v:3},{f:'CHC Gola',v:1}]},
+];
+const LAMA=[
+  {n:'Dr. Priya Sharma',v:4.2,col:'#E65100'},
+  {n:'Dr. Asha Kumari',v:7.8,col:'#B71C1C'},
+  {n:'Dr. Rekha Gupta',v:2.1,col:'#1B5E20'},
+  {n:'Dr. Nirmala Devi',v:1.8,col:'#1B5E20'},
+];
+const OUTCOMES=[
+  {lbl:'Recovered',v:1876,pct:67.7,col:'#2E7D32'},
+  {lbl:'Active',v:312,pct:11.3,col:'#1565C0'},
+  {lbl:'LAMA',v:254,pct:9.2,col:'#E65100'},
+  {lbl:'DAMA',v:189,pct:6.8,col:'#6A1B9A'},
+  {lbl:'Referred',v:142,pct:5.1,col:'#00838F'},
+];
+const DS=[
+  {n:'Dr. Priya Sharma',pct:57,col:'#E65100'},
+  {n:'Dr. Asha Kumari',pct:34,col:'#B71C1C'},
+  {n:'Dr. Rekha Gupta',pct:82,col:'#1B5E20'},
+  {n:'Dr. Nirmala Devi',pct:91,col:'#1B5E20'},
+];
+const COMP=[
+  {lbl:'Vitals recorded today',pct:78,col:'#1565C0'},
+  {lbl:'MAR compliance',pct:84,col:'#1B5E20'},
+  {lbl:'Allergy documented',pct:62,col:'#E65100'},
+  {lbl:'Consent on file',pct:90,col:'#1B5E20'},
+];
+const MEDS=[
+  {n:'Iron + Folic Acid 500mg',v:2840},{n:'Oxytocin 10 IU/mL injection',v:2040},
+  {n:'Amoxicillin 500mg capsules',v:1560},{n:'Paracetamol 500mg tablets',v:1360},
+  {n:'Metformin 500mg tablets',v:1080},{n:'Magnesium sulphate injection',v:792},
+  {n:'ORS sachets',v:624},{n:'Chloroquine phosphate',v:424},
+  {n:'Ibuprofen 400mg',v:380},{n:'Doxycycline 100mg',v:298},
+];
+const DEPT_MEDS=[
+  {dept:'OB/GYN',meds:'Iron+FA · Oxytocin · Mag Sulphate'},
+  {dept:'Gen. Medicine',meds:'Paracetamol · Amoxicillin · Metformin'},
+  {dept:'Paediatrics',meds:'ORS · Paracetamol · Chloroquine'},
+  {dept:'Orthopaedics',meds:'Paracetamol · Ibuprofen · Tramadol'},
+  {dept:'Emergency',meds:'Adrenaline · IV fluids · Morphine'},
+];
+const LAB_TYPES=[
+  {n:'CBC (complete blood count)',cnt:1420,tat:'3.8h',tatCol:'#1B5E20',max:1420},
+  {n:'Blood glucose / HbA1c',cnt:980,tat:'2.1h',tatCol:'#1B5E20',max:1420},
+  {n:'Malaria RDT / smear',cnt:642,tat:'1.4h',tatCol:'#1B5E20',max:1420},
+  {n:'Urine routine & microscopy',cnt:580,tat:'4.2h',tatCol:'#1B5E20',max:1420},
+  {n:'Liver function tests (LFT)',cnt:318,tat:'5.8h',tatCol:'#E65100',max:1420},
+  {n:'Renal function tests (RFT)',cnt:244,tat:'6.1h',tatCol:'#B71C1C',max:1420},
+  {n:'Thyroid function (TSH)',cnt:182,tat:'8.4h',tatCol:'#B71C1C',max:1420},
+];
+const RADIO_TYPES=[
+  {n:'Obstetric ultrasound',cnt:524,tat:'6.2h',tatCol:'#B71C1C',max:524},
+  {n:'Chest X-ray',cnt:318,tat:'7.8h',tatCol:'#B71C1C',max:524},
+  {n:'Abdominal X-ray',cnt:182,tat:'8.1h',tatCol:'#B71C1C',max:524},
+  {n:'Pelvic ultrasound',cnt:148,tat:'5.8h',tatCol:'#E65100',max:524},
+  {n:'CT scan (referred out)',cnt:48,tat:'—',tatCol:'#9CA3AF',max:524},
+];
+const PENDING=[
+  {dept:'OB/GYN',lab:42,radio:18},
+  {dept:'Gen. Medicine',lab:28,radio:12},
+  {dept:'Orthopaedics',lab:14,radio:22},
+  {dept:'Emergency',lab:8,radio:6},
+];
+const BEDS=['B01','B02','B03','B04','B05','B06','B07','B08','B09','B10','B11','B12','B13','B14','B15','B16','B17','B18'];
+const BED_STATUS=['occ','occ','free','occ','crit','occ','occ','free','crit','occ','free','occ','occ','occ','free','occ','occ','occ'];
+
+// ── RENDERS ─────────────────────────────────────────────────────────────────
+function renderQueue(){
+  document.getElementById('queue-tbody').innerHTML=QUEUE.map(q=>{
+    const wc=q.wait<=5?'w-ok':q.wait<=10?'w-warn':'w-late';
+    const sc=q.status==='In consult'?'#1565C0':'#9CA3AF';
+    return`<tr class="click" onclick="openPatientDrill('${q.id}')">
+      <td style="font-family:monospace;font-size:12px">${q.id}</td>
+      <td>${q.dept}</td>
+      <td><span class="wbadge ${wc}">${q.wait} min</span></td>
+      <td><span class="sdot" style="background:${sc}"></span>${q.status}</td>
+      <td style="font-size:11.5px;color:var(--muted)">${q.last}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderTags(data,containerId){
+  document.getElementById(containerId).innerHTML=data.map(t=>`
+    <div class="ptag-row" onclick="openTagDrill('${t.tag}','${containerId}')">
+      <div class="ptag-chip" style="background:${t.bg};color:${t.fc}">${t.tag}</div>
+      <div class="ptag-track"><div class="ptag-fill" style="width:${t.pct}%;background:${t.col}"></div></div>
+      <div class="ptag-val">${t.val}</div>
+      <div class="ptag-ch" style="color:${t.up===true?'var(--green)':t.up===false?'var(--red)':'var(--muted)'}">${t.ch}</div>
+    </div>`).join('');
+}
+
+function renderDiags(data,containerId){
+  document.getElementById(containerId).innerHTML=data.map((d,i)=>`
+    <div class="hrow" onclick="openDiagDrill('${d.n}','${containerId}')">
+      <div class="hrow-rank">${i+1}.</div>
+      <div class="hrow-name">${d.n}${d.warn?' <span class="warn-tag">⚠ 42.2%</span>':''}${d.preg?' <span class="preg-tag">▼ risk</span>':''}</div>
+      <div class="hrow-track"><div class="hrow-fill" style="width:${d.pct}%;background:${d.col}"></div></div>
+      <div class="hrow-val">${d.v.toLocaleString()}</div>
+      <div class="hrow-arr">›</div>
+    </div>`).join('');
+}
+
+function renderBedBoard(){
+  const cnt={occ:0,free:0,crit:0};
+  BED_STATUS.forEach(s=>cnt[s]++);
+  document.getElementById('bed-stats').innerHTML=`
+    <div class="bed-stat"><div class="bed-stat-n" style="color:#7B3500">${cnt.occ}</div><div class="bed-stat-l">Occupied</div></div>
+    <div class="bed-stat"><div class="bed-stat-n" style="color:var(--green)">${cnt.free}</div><div class="bed-stat-l">Free</div></div>
+    <div class="bed-stat"><div class="bed-stat-n" style="color:var(--red)">${cnt.crit}</div><div class="bed-stat-l">Critical</div></div>
+    <div class="bed-stat"><div class="bed-stat-n">5.4d</div><div class="bed-stat-l">Avg stay</div></div>`;
+  document.getElementById('bed-grid').innerHTML=BEDS.map((b,i)=>{
+    const cl=BED_STATUS[i]==='occ'?'b-occ':BED_STATUS[i]==='free'?'b-free':'b-crit';
+    return`<div class="bed ${cl}">${b}</div>`;
+  }).join('');
+}
+
+function renderLAMA(){
+  const maxV=10;
+  document.getElementById('lama-rows').innerHTML=LAMA.map(l=>{
+    const badge=l.v<=3?'lb-ok':l.v<=6?'lb-warn':'lb-bad';
+    const label=l.v<=3?'low':l.v<=6?'avg':'high';
+    return`<div class="lama-row">
+      <div class="lama-name">${l.n}</div>
+      <div class="lama-track"><div class="lama-fill" style="width:${l.v/maxV*100}%;background:${l.col}"></div></div>
+      <div class="lama-val">${l.v}%</div>
+      <div class="lama-badge ${badge}">${label}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderOutcomes(){
+  document.getElementById('outcome-mini').innerHTML=`
+    <div class="mk"><div class="mk-n" style="color:var(--green)">68%</div><div class="mk-l">Recovered</div></div>
+    <div class="mk"><div class="mk-n" style="color:var(--red)">9%</div><div class="mk-l">LAMA</div></div>
+    <div class="mk"><div class="mk-n" style="color:var(--blue)">11%</div><div class="mk-l">Active</div></div>`;
+  document.getElementById('outcome-strip').innerHTML=OUTCOMES.map(o=>`<div style="flex:${o.pct};background:${o.col}"></div>`).join('');
+  document.getElementById('outcome-legend').innerHTML=OUTCOMES.map(o=>`
+    <div class="ol-item"><div class="ol-dot" style="background:${o.col}"></div>${o.lbl} ${o.v.toLocaleString()} (${o.pct}%)</div>`).join('');
+}
+
+function renderDS(){
+  document.getElementById('ds-rows').innerHTML=DS.map(d=>{
+    const badge=d.pct>=80?'db-ok':d.pct>=50?'db-warn':'db-bad';
+    const lbl=d.pct>=80?'good':d.pct>=50?'warn':'low';
+    return`<div class="ds-row">
+      <div class="ds-name">${d.n}</div>
+      <div class="ds-track"><div class="ds-fill" style="width:${d.pct}%;background:${d.col}"></div></div>
+      <div class="ds-pct">${d.pct}%</div>
+      <div class="ds-badge ${badge}">${lbl}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderComp(){
+  document.getElementById('comp-rows').innerHTML=COMP.map(c=>`
+    <div class="comp-row">
+      <div class="comp-lbl">${c.lbl}</div>
+      <div class="comp-track"><div class="comp-fill" style="width:${c.pct}%;background:${c.col}"></div></div>
+      <div class="comp-pct" style="color:${c.col}">${c.pct}%</div>
+    </div>`).join('');
+}
+
+function renderMeds(){
+  const max=MEDS[0].v;
+  document.getElementById('med-list').innerHTML=MEDS.map((m,i)=>`
+    <div class="hrow" onclick="openMedDrill()">
+      <div class="hrow-rank">${i+1}.</div>
+      <div class="hrow-name">${m.n}</div>
+      <div class="hrow-track"><div class="hrow-fill" style="width:${Math.round(m.v/max*100)}%;background:#0D1F3C"></div></div>
+      <div class="hrow-val">${m.v.toLocaleString()}</div>
+      <div class="hrow-arr">›</div>
+    </div>`).join('');
+  document.getElementById('dept-meds').innerHTML=DEPT_MEDS.map(d=>`
+    <div class="hrow" style="cursor:default">
+      <div class="hrow-name" style="font-weight:600;width:110px;flex:none">${d.dept}</div>
+      <div style="font-size:12px;color:var(--muted);flex:1">${d.meds}</div>
+    </div>`).join('');
+}
+
+function renderLabRadio(){
+  document.getElementById('lab-stat').innerHTML=`
+    <div class="lr-box"><div class="lr-n">4,281</div><div class="lr-l">Total requests issued</div><div class="lr-delta up">↑ 18%</div></div>
+    <div class="lr-box"><div class="lr-n" style="color:var(--green)">4.2<span style="font-size:13px"> hrs</span></div><div class="lr-l">Avg TAT (target &lt;6h)</div><div class="lr-delta up">✓ within target</div></div>
+    <div class="lr-box"><div class="lr-n" style="color:var(--amber)">142</div><div class="lr-l">Pending &gt;6 hours</div></div>`;
+  document.getElementById('lab-types').innerHTML=LAB_TYPES.map(t=>`
+    <div class="type-row">
+      <div class="type-name">${t.n}</div>
+      <div class="type-bar"><div class="type-fill" style="width:${Math.round(t.cnt/t.max*100)}%;background:#1565C0">&nbsp;</div></div>
+      <div class="type-count">${t.cnt.toLocaleString()}</div>
+      <div class="type-tat" style="color:${t.tatCol};font-weight:600">${t.tat}</div>
+    </div>`).join('');
+  document.getElementById('radio-stat').innerHTML=`
+    <div class="lr-box"><div class="lr-n">1,317</div><div class="lr-l">Total reports issued</div><div class="lr-delta up">↑ 15%</div></div>
+    <div class="lr-box"><div class="lr-n" style="color:var(--red)">8.1<span style="font-size:13px"> hrs</span></div><div class="lr-l">Avg TAT (target &lt;6h)</div><div class="lr-delta dn">⚠ above target</div></div>
+    <div class="lr-box"><div class="lr-n" style="color:var(--red)">284</div><div class="lr-l">Pending &gt;6 hours</div></div>`;
+  document.getElementById('radio-types').innerHTML=RADIO_TYPES.map(t=>`
+    <div class="type-row">
+      <div class="type-name">${t.n}</div>
+      <div class="type-bar"><div class="type-fill" style="width:${Math.round(t.cnt/t.max*100)}%;background:#4527A0">&nbsp;</div></div>
+      <div class="type-count">${t.cnt}</div>
+      <div class="type-tat" style="color:${t.tatCol};font-weight:600">${t.tat}</div>
+    </div>`).join('');
+  document.getElementById('pending-reqs').innerHTML=`
+    <div style="display:flex;gap:8px;font-size:10.5px;color:var(--muted);margin-bottom:5px;font-weight:700">
+      <span style="flex:1">Department</span><span style="width:60px;text-align:right">Lab</span><span style="width:60px;text-align:right">Radiology</span>
+    </div>`+PENDING.map(p=>`
+    <div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid #F0F0F0;font-size:12px">
+      <span style="flex:1">${p.dept}</span>
+      <span style="width:60px;text-align:right;font-weight:600;color:${p.lab>20?'var(--amber)':'var(--muted)'}">${p.lab}</span>
+      <span style="width:60px;text-align:right;font-weight:600;color:${p.radio>15?'var(--amber)':'var(--muted)'}">${p.radio}</span>
+    </div>`).join('');
+}
+
+function renderAgeGender(section){
+  const bands=['< 5','5–18','18–40','40–60','> 60'];
+  const mD=[22,28,42,38,18];
+  const fD=[20,25,60,30,12];
+  const maxV=60;
+  const legend=`<div style="display:flex;gap:12px;font-size:11px;color:var(--muted);margin-bottom:8px">
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:6px;background:var(--blue);border-radius:1px;display:inline-block"></span>Male</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:6px;background:var(--red);border-radius:1px;display:inline-block"></span>Female</span>
+  </div>`;
+  const ageHTML=bands.map((b,i)=>`
+    <div class="age-row">
+      <div class="age-num" style="text-align:right">${mD[i]}%</div>
+      <div style="flex:1;display:flex;justify-content:flex-end"><div class="age-m" style="width:${mD[i]/maxV*100}%"></div></div>
+      <div class="age-lbl">${b}</div>
+      <div style="flex:1;display:flex"><div class="age-f" style="width:${fD[i]/maxV*100}%"></div></div>
+      <div class="age-num">${fD[i]}%</div>
+    </div>`).join('');
+  const depts=['OB/GYN','Gen. Medicine','Orthopaedics','Paediatrics','Emergency'];
+  const fPcts=[98,46,38,49,42];
+  const genderHTML=depts.map((d,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #F0F0F0">
+      <div style="font-size:12px;flex:1">${d}</div>
+      <div style="flex:2;display:flex;gap:2px;align-items:center">
+        <div style="height:8px;border-radius:2px;background:var(--blue);width:${100-fPcts[i]}%"></div>
+        <div style="height:8px;border-radius:2px;background:var(--red);width:${fPcts[i]}%"></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);width:70px;text-align:right">${100-fPcts[i]}M / ${fPcts[i]}F</div>
+    </div>`).join('');
+  document.getElementById(section+'-age-view').innerHTML=legend+ageHTML;
+  document.getElementById(section+'-gender-view').innerHTML=genderHTML;
+}
+
+// ── DRILL FUNCTIONS ──────────────────────────────────────────────────────────
+function closeDrill(id){document.getElementById(id).classList.remove('open')}
+
+function openQueueDrill(){
+  document.getElementById('drill-queue-bc').textContent='Queue · Facility → Department → Doctor';
+  document.getElementById('drill-queue-body').innerHTML=`
+    <div class="dp-note info" style="margin-top:0;margin-bottom:10px">Facility: Sadar Ramgarh DH · All departments · Today</div>
+    <table class="qtbl">
+      <thead><tr><th>Department</th><th>Queued</th><th>Avg wait</th><th>In consult</th></tr></thead>
+      <tbody>
+        <tr class="click" onclick="openDeptQueueDrill('OB/GYN')"><td>OB/GYN</td><td>8</td><td><span class="wbadge w-warn">8.2 min</span></td><td>1</td></tr>
+        <tr class="click" onclick="openDeptQueueDrill('Gen. Medicine')"><td>Gen. Medicine</td><td>4</td><td><span class="wbadge w-ok">5.1 min</span></td><td>1</td></tr>
+        <tr class="click" onclick="openDeptQueueDrill('Paediatrics')"><td>Paediatrics</td><td>2</td><td><span class="wbadge w-ok">3.8 min</span></td><td>0</td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:11.5px;color:var(--muted);margin-top:8px">Click a department to see doctor-level queue breakdown</div>`;
+  document.getElementById('drill-queue').classList.add('open');
+}
+
+function openDeptQueueDrill(dept){
+  const data={
+    'OB/GYN':[{doc:'Dr. Priya Sharma',q:5,wait:'8.4 min'},{doc:'Dr. Asha Kumari',q:3,wait:'7.9 min'}],
+    'Gen. Medicine':[{doc:'Dr. Ramesh Kumar',q:4,wait:'5.1 min'}],
+    'Paediatrics':[{doc:'Dr. Sunita Devi',q:2,wait:'3.8 min'}],
+  };
+  const docs=data[dept]||[];
+  document.getElementById('drill-queue-bc').textContent=`Queue · ${dept} · Doctor breakdown`;
+  document.getElementById('drill-queue-body').innerHTML=`
+    <div class="dp-note info" style="margin-top:0;margin-bottom:10px">Department: <strong>${dept}</strong> · Sadar Ramgarh DH · Today</div>
+    <table class="qtbl"><thead><tr><th>Doctor</th><th>Patients queued</th><th>Avg wait</th></tr></thead>
+    <tbody>${docs.map(d=>`<tr><td><strong>${d.doc}</strong></td><td>${d.q}</td><td><span class="wbadge w-warn">${d.wait}</span></td></tr>`).join('')}</tbody>
+    </table>
+    <div style="font-size:11.5px;color:var(--muted);margin-top:8px">← Click "Back" to return to facility view</div>`;
+}
+
+// FIX: openPatientDrill now shows real encounter detail instead of re-opening queue drill
+function openPatientDrill(id){
+  const pt=QUEUE.find(q=>q.id===id);
+  if(!pt)return;
+  const riskCol=pt.risk==='High'?'var(--red)':pt.risk==='Medium'?'var(--amber)':'var(--green)';
+  document.getElementById('ptModalTitle').textContent=`Patient Encounter · ${pt.id}`;
+  document.getElementById('ptModalBody').innerHTML=`
+    <div class="pt-row"><div class="pt-lbl">Patient ID</div><div class="pt-val" style="font-family:monospace">${pt.id}</div></div>
+    <div class="pt-row"><div class="pt-lbl">Department</div><div class="pt-val">${pt.dept}</div></div>
+    <div class="pt-row"><div class="pt-lbl">Attending doctor</div><div class="pt-val">${pt.consult}</div></div>
+    <div class="pt-row"><div class="pt-lbl">Age</div><div class="pt-val">${pt.age} years</div></div>
+    <div class="pt-row"><div class="pt-lbl">Status</div><div class="pt-val"><span class="sdot" style="background:${pt.status==='In consult'?'#1565C0':'#9CA3AF'}"></span>${pt.status}</div></div>
+    <div class="pt-row"><div class="pt-lbl">Wait time</div><div class="pt-val"><span class="wbadge ${pt.wait<=5?'w-ok':pt.wait<=10?'w-warn':'w-late'}">${pt.wait} min</span></div></div>
+    <div class="pt-row"><div class="pt-lbl">Last visit diagnosis</div><div class="pt-val">${pt.last}</div></div>
+    <div class="pt-row"><div class="pt-lbl">Pregnancy risk</div><div class="pt-val"><span style="font-weight:700;color:${riskCol}">${pt.risk} risk</span></div></div>
+    <div class="pt-row"><div class="pt-lbl">ABHA ID</div><div class="pt-val" style="font-family:monospace;font-size:11.5px">${pt.abha}</div></div>
+    <div style="margin-top:12px;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--border);font-size:11.5px;color:var(--muted)">
+      ℹ Full encounter record, clinical notes, lab orders and prescriptions are available in the CARE encounter view. This panel shows a summary only.
+    </div>`;
+  document.getElementById('ptOverlay').classList.add('show');
+}
+function closePtOverlay(){document.getElementById('ptOverlay').classList.remove('show')}
+
+// FIX: openTagDrill now shows real facility breakdown instead of console.log
+function openTagDrill(tag,src){
+  const dataset=src.startsWith('opd')?OPD_TAGS:IPD_TAGS;
+  const t=dataset.find(x=>x.tag===tag);
+  if(!t)return;
+  const type=src.startsWith('opd')?'OPD':'IPD';
+  const maxV=t.breakdown[0].v;
+  document.getElementById('tagModalTitle').textContent=`${tag} tag · ${type} · May 2026`;
+  document.getElementById('tagModalBody').innerHTML=`
+    ${t.note?`<div class="dp-note info" style="margin-top:0;margin-bottom:12px">${t.note}</div>`:''}
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Facility breakdown</div>
+    ${t.breakdown.map(f=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #F0F0F0">
+        <div style="font-size:12.5px;flex:1">${f.f}</div>
+        <div style="flex:1;height:8px;background:#EEEEEE;border-radius:3px;overflow:hidden">
+          <div style="height:100%;border-radius:3px;background:${t.col};width:${Math.round(f.v/maxV*100)}%"></div>
+        </div>
+        <div style="font-size:12.5px;font-weight:600;width:36px;text-align:right">${f.v}</div>
+      </div>`).join('')}
+    <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px;color:var(--muted);padding-top:8px;border-top:1px solid #F0F0F0">
+      <span>Total</span><span style="font-weight:700;color:var(--navy)">${t.val}</span>
+    </div>`;
+  document.getElementById('tagOverlay').classList.add('show');
+}
+function closeTagOverlay(){document.getElementById('tagOverlay').classList.remove('show')}
+
+function openDiagDrill(name,src){
+  const isIPD=src.startsWith('ipd');
+  const drillId=isIPD?'drill-ipd-diag':'drill-opd-diag';
+  const bcId=isIPD?'drill-ipd-diag-bc':'drill-opd-diag-bc';
+  const bodyId=isIPD?'drill-ipd-diag-body':'drill-opd-diag-body';
+  const isPreg=['Anaemia in pregnancy','Normal delivery','Normal delivery (complex)','Caesarean section','ANC routine','Gestational diabetes','Preeclampsia','Preeclampsia / eclampsia','Postpartum haemorrhage'].includes(name);
+  let body=`<div class="dp-note info" style="margin-top:0;margin-bottom:10px">Diagnosis: <strong>${name}</strong> · May 2026 · Sadar Ramgarh DH</div>`;
+  if(isPreg){
+    body+=`<div style="font-size:12.5px;font-weight:700;margin-bottom:8px">Pregnancy risk stratification</div>
+      <div class="risk-strip">
+        <div class="risk-box" style="background:var(--red)"><div class="risk-num" style="color:#fff">89</div><div class="risk-lbl">High risk</div></div>
+        <div class="risk-box" style="background:var(--amber)"><div class="risk-num" style="color:#fff">142</div><div class="risk-lbl">Medium risk</div></div>
+        <div class="risk-box" style="background:var(--green)"><div class="risk-num" style="color:#fff">438</div><div class="risk-lbl">Low risk</div></div>
+      </div>
+      <div class="dp-note warn">⚠ 89 high-risk pregnancies flagged — preeclampsia, severe anaemia, GDM. Requires active clinical follow-up.</div>`;
+  }
+  const data=isIPD?IPD_DIAGS:OPD_DIAGS;
+  const found=data.find(d=>d.n===name);
+  const total=found?found.v:100;
+  body+=`<div style="margin-top:12px">
+    <div style="font-size:12px;font-weight:700;margin-bottom:8px">Department breakdown</div>
+    <table class="qtbl"><thead><tr><th>Department</th><th>Count</th><th>% of total</th></tr></thead>
+    <tbody>
+      <tr><td>OB/GYN</td><td style="font-weight:600">${Math.round(total*0.68)}</td><td>68%</td></tr>
+      <tr><td>Gen. Medicine</td><td style="font-weight:600">${Math.round(total*0.22)}</td><td>22%</td></tr>
+      <tr><td>Other</td><td style="font-weight:600">${Math.round(total*0.10)}</td><td>10%</td></tr>
+    </tbody></table></div>`;
+  document.getElementById(bcId).textContent=`${isIPD?'IPD':'OPD'} Diagnoses · ${name}`;
+  document.getElementById(bodyId).innerHTML=body;
+  document.getElementById(drillId).classList.add('open');
+}
+
+function openOutcomeDrill(){
+  document.getElementById('drill-outcome-bc').textContent='Discharge Outcomes · Detail';
+  document.getElementById('drill-outcome-body').innerHTML=`
+    <div class="dp2">
+      <div class="dp-panel"><div class="dp-title">Outcome by facility</div>
+        ${[{n:'Sadar Ramgarh DH',rec:'68%',lama:'9%'},{n:'CHC Mandu',rec:'74%',lama:'6%'},{n:'CHC Gola',rec:'71%',lama:'8%'}].map(f=>`
+        <div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #F0F0F0;font-size:12px">
+          <span style="flex:1;font-weight:600">${f.n}</span>
+          <span style="color:var(--green)">${f.rec} rec.</span>
+          <span style="color:var(--red)">${f.lama} LAMA</span>
+        </div>`).join('')}
+      </div>
+      <div class="dp-panel"><div class="dp-title">Active patients — top diagnoses</div>
+        ${['Anaemia in pregnancy (62)','Normal delivery recovery (54)','C-section recovery (48)','Malaria — severe (28)','Preeclampsia (21)'].map(d=>`
+        <div style="padding:5px 0;border-bottom:1px solid #F0F0F0;font-size:12px">${d}</div>`).join('')}
+      </div>
+    </div>`;
+  document.getElementById('drill-outcome').classList.add('open');
+}
+
+function openMedDrill(){
+  document.getElementById('drill-med-body').innerHTML=`
+    <div class="dp-note info" style="margin-top:0;margin-bottom:10px">Medications by department · Sadar Ramgarh DH · May 2026</div>
+    ${DEPT_MEDS.map(d=>`
+      <div style="padding:8px 0;border-bottom:1px solid #F0F0F0">
+        <div style="font-size:12.5px;font-weight:700;margin-bottom:4px">${d.dept}</div>
+        <div style="font-size:12px;color:var(--muted)">${d.meds}</div>
+      </div>`).join('')}`;
+  document.getElementById('drill-med').classList.add('open');
+}
+
+// ── AGE/GENDER TOGGLE ────────────────────────────────────────────────────────
+function toggleAgView(section){
+  const panel=document.getElementById(section+'-ag-panel');
+  const isOpen=panel.style.display!=='none';
+  panel.style.display=isOpen?'none':'block';
+  if(!isOpen)renderAgeGender(section);
+}
+function setAgTab(section,view,btn){
+  document.querySelectorAll('#'+section+'-ag-panel .ag-tab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById(section+'-age-view').style.display=view==='age'?'block':'none';
+  document.getElementById(section+'-gender-view').style.display=view==='gender'?'block':'none';
+}
+
+// ── ROLE / PERIOD ────────────────────────────────────────────────────────────
+let curRole='facility';
+function setRole(r){
+  curRole=r;
+  document.querySelectorAll('.rt-btn').forEach(b=>b.classList.remove('on'));
+  document.querySelector('.rt-btn[onclick="setRole(\''+r+'\')"]').classList.add('on');
+  document.getElementById('doc-filter').style.display=r==='doctor'?'flex':'none';
+  const titles={facility:'Sadar Ramgarh DH',dept:'OB/GYN Department',doctor:'Dr. Priya Sharma'};
+  document.getElementById('sum-meta').textContent=titles[r]+' · May 2026 · '+r.charAt(0).toUpperCase()+r.slice(1)+' level';
+  document.getElementById('queue-sub').textContent=r==='doctor'
+    ?'Today · Dr. Priya Sharma · OB/GYN · Click patient to open encounter'
+    :'Today · Sadar Ramgarh DH · Click patient to open encounter';
+}
+function setDoctor(v){
+  const names={all:'All doctors',priya:'Dr. Priya Sharma',asha:'Dr. Asha Kumari',rekha:'Dr. Rekha Gupta',nirmala:'Dr. Nirmala Devi'};
+  document.getElementById('sum-meta').textContent=names[v]+' · May 2026 · Doctor view';
+}
+function setPeriod(p){
+  const labels={today:'Today',week:'This week (5–11 May 2026)',month:'May 2026'};
+  document.getElementById('sum-meta').textContent='Sadar Ramgarh DH · '+labels[p]+' · '+curRole.charAt(0).toUpperCase()+curRole.slice(1)+' level';
+  document.getElementById('opd-meta').textContent=labels[p]+' · Sadar Ramgarh DH';
+  document.getElementById('ipd-meta').textContent=labels[p]+' · Sadar Ramgarh DH';
+}
+
+// ── INIT ────────────────────────────────────────────────────────────────────
+renderQueue();
+renderTags(OPD_TAGS,'opd-tags');
+renderTags(IPD_TAGS,'ipd-tags');
+renderDiags(OPD_DIAGS,'opd-diag-list');
+renderDiags(IPD_DIAGS,'ipd-diag-list');
+renderBedBoard();
+renderLAMA();
+renderOutcomes();
+renderDS();
+renderComp();
+renderMeds();
+renderLabRadio();
+</script>
+</body>
+</html>

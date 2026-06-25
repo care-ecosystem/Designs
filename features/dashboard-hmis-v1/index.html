@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CARE-HMIS Dashboard — Ramgarh District</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// Minimal inline ChartDataLabels plugin (no CDN dependency)
+const ChartDataLabels = {
+  id:'datalabels',
+  afterDatasetsDraw(chart,args,opts){
+    if(!opts||opts===false)return;
+    const{ctx}=chart;
+    chart.data.datasets.forEach((ds,di)=>{
+      const meta=chart.getDatasetMeta(di);
+      if(meta.hidden)return;
+      meta.data.forEach((el,idx)=>{
+        const cfg=typeof opts==='object'?opts:{};
+        const display=cfg.display!=null?(typeof cfg.display==='function'?cfg.display({datasetIndex:di,dataIndex:idx}):cfg.display):true;
+        if(!display)return;
+        const rawVal=chart.data.datasets[di].data[idx];
+        const formatter=cfg.formatter||(v=>v);
+        const txt=String(formatter(rawVal,{datasetIndex:di,dataIndex:idx,chart}));
+        const font=cfg.font||{};
+        const anchor=cfg.anchor||'end';
+        const offset=cfg.offset||4;
+        const color=typeof cfg.color==='function'?cfg.color({datasetIndex:di,dataIndex:idx}):cfg.color||'#333';
+        ctx.save();
+        ctx.font=`${font.weight||'600'} ${font.size||11}px ${font.family||"'Helvetica Neue',Arial,sans-serif"}`;
+        ctx.fillStyle=color;
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        let x=el.x,y=el.y;
+        const type=chart.config.type;
+        if(type==='bar'||type==='horizontalBar'){
+          if(anchor==='end')y=el.y-offset-6;
+          else if(anchor==='center')y=el.y+(el.base-el.y)/2;
+        } else if(type==='doughnut'||type==='pie'){
+          const startAngle=el.startAngle;
+          const endAngle=el.endAngle;
+          const midAngle=(startAngle+endAngle)/2;
+          const outerRadius=el.outerRadius;
+          const innerRadius=el.innerRadius||0;
+          const r=(outerRadius+innerRadius)/2;
+          x=el.x+Math.cos(midAngle)*r;
+          y=el.y+Math.sin(midAngle)*r;
+        }
+        ctx.fillText(txt,x,y);
+        ctx.restore();
+      });
+    });
+  }
+};
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1A2B5E;--accent:#1565C0;
+  --green:#1B5E20;--teal:#00695C;--amber:#E65100;--red:#B71C1C;--purple:#4527A0;
+  --border:#E0E0E0;--bg:#F7F8FA;--white:#fff;--text:#212121;--muted:#757575;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+button,select{font-family:inherit;cursor:pointer}
+
+/* ── TOP BAR ── */
+#topbar{
+  background:var(--primary);color:#fff;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;height:56px;position:sticky;top:0;z-index:400;
+  box-shadow:0 2px 10px rgba(0,0,0,.28)
+}
+.tb-brand{display:flex;align-items:center;gap:14px}
+.tb-title{font-size:16px;font-weight:700}
+.tb-loc{font-size:12px;color:rgba(255,255,255,.6);margin-top:2px}
+.tb-controls{display:flex;align-items:center;gap:14px}
+.tb-updated{font-size:11px;color:rgba(255,255,255,.45)}
+
+.level-toggle{display:flex;background:rgba(255,255,255,.12);border-radius:6px;padding:2px;gap:1px}
+.lt-btn{font-size:12px;font-weight:500;padding:5px 14px;border-radius:4px;color:rgba(255,255,255,.5);border:none;background:none;cursor:pointer;transition:all .18s;white-space:nowrap}
+.lt-btn.on{background:#fff;color:var(--primary);font-weight:700}
+.fac-sel{font-size:12px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:5px;padding:5px 10px;display:none}
+.fac-sel option{background:var(--primary)}
+
+.period-wrap{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.08);border-radius:6px;padding:4px 12px}
+.period-lbl{font-size:11px;color:rgba(255,255,255,.5);white-space:nowrap}
+.period-sel{font-size:12.5px;font-weight:600;background:transparent;color:#fff;border:none;cursor:pointer;outline:none}
+.period-sel option{background:var(--primary);font-weight:400}
+
+/* ── BREADCRUMB BAR ── */
+#bc-bar{
+  background:#fff;border-bottom:1.5px solid var(--border);
+  padding:7px 28px;display:flex;align-items:center;gap:6px;
+  position:sticky;top:56px;z-index:300;font-size:12.5px
+}
+.bc-crumb{color:var(--accent);cursor:pointer;padding:2px 5px;border-radius:4px;transition:background .15s}
+.bc-crumb:hover{background:#E3F2FD}
+.bc-crumb.active{color:var(--text);font-weight:600;cursor:default}
+.bc-crumb.active:hover{background:none}
+.bc-sep{color:#BDBDBD;padding:0 1px}
+.bc-hint{color:#BDBDBD;font-style:italic;margin-left:4px}
+
+/* ── PAGE ── */
+.page{padding:0 28px 40px;max-width:1400px;margin:0 auto}
+
+/* ── SECTION HEADER ── */
+.section{margin-top:28px}
+.sec-hdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--primary)}
+.sec-title{font-size:15px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.06em}
+.sec-meta{font-size:12px;color:var(--muted);font-style:italic}
+
+/* ── SUMMARY STRIP ── */
+#summary-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.sum-card{background:#fff;padding:16px 14px 14px}
+.sum-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.sum-num{font-size:30px;font-weight:300;color:var(--text);line-height:1;letter-spacing:-.02em}
+.sum-abha-row{display:flex;align-items:center;gap:7px;margin-top:9px}
+.sum-abha-bar{flex:1;height:4px;background:#DBEAFE;border-radius:2px;overflow:hidden}
+.sum-abha-fill{height:100%;border-radius:2px;background:var(--accent)}
+.sum-abha-pct{font-size:12px;font-weight:700;color:var(--accent);white-space:nowrap}
+.sum-abha-lbl{font-size:10.5px;color:#64B5F6;white-space:nowrap}
+.sum-extra{font-size:11px;color:var(--teal);font-weight:600;margin-top:4px}
+.sum-delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;margin-top:6px;color:var(--muted)}
+.sum-delta-val{font-weight:700}
+.sum-delta-val.up{color:var(--green)}.sum-delta-val.dn{color:var(--red)}
+.sum-scope{font-size:10px;color:#BDBDBD;margin-top:4px;line-height:1.35}
+
+/* ── CHART CARD ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:20px 22px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.cc-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;gap:12px}
+.cc-title{font-size:15px;font-weight:700;color:var(--text)}
+.cc-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.cc-period{font-size:11px;color:#BDBDBD;font-style:italic;margin-top:2px}
+.cc-ctrl{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.cc-btn{font-size:11.5px;padding:4px 11px;border-radius:5px;border:1px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
+.cc-btn:hover{border-color:var(--accent);color:var(--accent)}
+.cc-btn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.legend-row{display:flex;align-items:center;gap:14px;margin-top:10px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* ── HORIZONTAL BAR LIST ── */
+.hbar-row{display:flex;align-items:center;gap:10px;padding:9px 8px;border-bottom:1px solid #F0F0F0;cursor:pointer;transition:all .15s;border-radius:4px}
+.hbar-row:last-child{border-bottom:none}
+.hbar-row:hover{background:#F0F7FF}
+.hbar-name{font-size:13px;width:180px;flex-shrink:0;line-height:1.3;font-weight:500}
+.hbar-track{flex:1;height:9px;background:#EEEEEE;border-radius:4px;overflow:hidden}
+.hbar-fill{height:100%;border-radius:4px}
+.hbar-val{font-size:13px;font-weight:700;width:44px;text-align:right;flex-shrink:0}
+.hbar-arr{font-size:14px;color:#BDBDBD;flex-shrink:0}
+
+/* ── SERVICE REQUEST BARS ── */
+.svc-bar-row{display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid #F0F0F0}
+.svc-bar-row:last-child{border-bottom:none}
+.svc-bar-name{font-size:13px;font-weight:600;width:160px;flex-shrink:0}
+.svc-bars-col{flex:1;display:flex;flex-direction:column;gap:4px}
+.svc-bar-wrap{display:flex;align-items:center;gap:8px}
+.svc-bar-lbl{font-size:11px;color:var(--muted);width:56px;flex-shrink:0}
+.svc-track{flex:1;height:14px;background:#EEEEEE;border-radius:4px;overflow:hidden}
+.svc-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:7px;font-size:11px;font-weight:700;color:#fff;transition:width .3s}
+.svc-side{font-size:12px;font-weight:700;width:52px;text-align:right;flex-shrink:0}
+.svc-rate{font-size:12px;font-weight:700;width:50px;text-align:right;flex-shrink:0}
+
+/* ── PATIENT TAG ROWS ── */
+.ptag-row{display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid #F0F0F0;cursor:pointer;transition:all .15s;border-radius:4px}
+.ptag-row:last-child{border-bottom:none}
+.ptag-row:hover{background:#F0F7FF}
+.ptag-chip{font-size:11px;font-weight:700;padding:3px 9px;border-radius:12px;width:50px;text-align:center;flex-shrink:0}
+.ptag-track{flex:1;height:10px;background:#EEEEEE;border-radius:5px;overflow:hidden}
+.ptag-fill{height:100%;border-radius:5px}
+.ptag-val{font-size:13px;font-weight:700;width:38px;text-align:right;flex-shrink:0}
+.ptag-ch{font-size:12px;font-weight:600;width:72px;text-align:right;flex-shrink:0;white-space:nowrap}
+
+/* ── DISCHARGE DONUT ── */
+.outcome-grid{display:flex;align-items:flex-start;gap:20px;margin-top:10px}
+.donut-wrap{width:170px;height:170px;flex-shrink:0;position:relative}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.donut-center-num{font-size:22px;font-weight:300;color:var(--text)}
+.donut-center-lbl{font-size:11px;color:var(--muted)}
+.outcome-legend{flex:1}
+.out-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;cursor:pointer;border:1px solid transparent;margin-bottom:3px;transition:all .15s}
+.out-item:hover{background:#F5F5F5;border-color:var(--border)}
+.out-item.sel{background:#EEF6FF;border-color:#BBDEFB}
+.out-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.out-name{font-size:13px;flex:1;font-weight:500}
+.out-val{font-size:13.5px;font-weight:700}
+.out-pct{font-size:11.5px;color:var(--muted);margin-left:4px}
+
+/* ── OPS CARDS ── */
+.ops-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.ops-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:18px 16px 14px;cursor:pointer;transition:all .15s;border-top:3px solid var(--border);display:flex;flex-direction:column}
+.ops-card:hover{box-shadow:0 3px 12px rgba(0,0,0,.1);transform:translateY(-2px);border-color:#C5CAD8}
+.ops-icon{font-size:20px;margin-bottom:10px}
+.ops-kpi-name{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.ops-num{font-size:30px;font-weight:300;color:var(--text);line-height:1;letter-spacing:-.01em}
+.ops-unit{font-size:16px;font-weight:300}
+.ops-desc{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5;flex:1}
+.ops-delta{font-size:12.5px;font-weight:700;margin-top:10px}
+.ops-scope{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
+.ops-drill-hint{font-size:11px;color:var(--accent);margin-top:10px;font-weight:600;border-top:1px solid #EEF0F4;padding-top:8px}
+
+/* ── REFERRAL TABLE ── */
+.ref-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+.ref-tbl th{padding:9px 14px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border);text-align:left;background:#FAFAFA;white-space:nowrap}
+.ref-tbl td{padding:11px 14px;border-bottom:1px solid #F0F0F0;vertical-align:middle}
+.ref-tbl tr:last-child td{border-bottom:none}
+.ref-tbl tr.click:hover td{background:#F0F7FF;cursor:pointer}
+.ref-level{font-size:11px;font-weight:700;padding:3px 9px;border-radius:4px;display:inline-block;white-space:nowrap}
+.ref-arrow{font-size:18px;color:var(--border);font-weight:300}
+
+/* ── DRILL PANEL ── */
+.drill-panel{display:none;border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;margin-top:14px;overflow:hidden;animation:slideIn .2s ease}
+.drill-panel.open{display:block}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.dp-hdr{background:#EEF6FF;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #BBDEFB;gap:10px}
+.dp-bc{font-size:12.5px;color:var(--accent);font-weight:600;flex:1}
+.dp-bc .dp-bc-dim{color:var(--muted);font-weight:400}
+.dp-close{font-size:12px;padding:3px 10px;border-radius:5px;border:1px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
+.dp-close:hover{background:#FFEBEE;color:var(--red);border-color:#FECACA}
+.dp-body{padding:16px}
+.dp-note{font-size:12px;color:var(--muted);padding:9px 13px;border-radius:5px;margin-bottom:14px;line-height:1.6;border:1px solid}
+.dp-note.info{background:#EEF6FF;border-color:#BBDEFB;color:var(--accent)}
+.dp-note.warn{background:#FFF3E0;border-color:#FFCC80;color:var(--amber)}
+.dp-note.good{background:#E8F5E9;border-color:#A5D6A7;color:var(--green)}
+.dp-note.bad{background:#FFEBEE;border-color:#FECACA;color:var(--red)}
+.dp-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.dp-panel{background:var(--bg);border-radius:6px;padding:14px;border:1px solid var(--border)}
+.dp-ptitle{font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px}
+
+.dp-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.dp-tbl th{padding:8px 10px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border);text-align:left;background:#FAFAFA;white-space:nowrap}
+.dp-tbl td{padding:9px 10px;border-bottom:1px solid #F0F0F0;vertical-align:middle}
+.dp-tbl tr:last-child td{border-bottom:none}
+.dp-tbl tr.click:hover td{background:#EEF6FF;cursor:pointer}
+
+.badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;display:inline-block;white-space:nowrap}
+.b-g{background:#E8F5E9;color:#1B5E20}.b-m{background:#FFF3E0;color:#E65100}.b-b{background:#FFEBEE;color:#B71C1C}.b-i{background:#E3F2FD;color:#0D47A1}
+
+.bed-grid{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.bed-pill{font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;border:1px solid}
+.bp-occ{background:#FFF8E1;border-color:#F9A825;color:#5D4037}
+.bp-free{background:#E8F5E9;border-color:#66BB6A;color:#1B5E20}
+.bp-crit{background:#FFEBEE;border-color:#EF5350;color:#B71C1C}
+
+.mini-kpis{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.mini-kpi{background:#fff;border:1px solid var(--border);border-radius:6px;padding:10px 14px;flex:1;min-width:100px}
+.mk-num{font-size:22px;font-weight:300;line-height:1}
+.mk-lbl{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* ── MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:600;align-items:center;justify-content:center;padding:24px}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:8px;max-width:460px;width:100%;box-shadow:0 12px 48px rgba(0,0,0,.2);animation:popM .2s ease;overflow:hidden}
+@keyframes popM{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.modal-hdr{background:#EEF6FF;border-bottom:1px solid #BBDEFB;padding:14px 18px;display:flex;align-items:flex-start;justify-content:space-between}
+.modal-title{font-size:14px;font-weight:700;color:var(--accent)}
+.modal-sub{font-size:12px;color:var(--muted);margin-top:3px;font-style:italic}
+.modal-close{font-size:20px;color:var(--muted);cursor:pointer;margin-left:12px;flex-shrink:0}
+.modal-close:hover{color:var(--red)}
+.modal-body{padding:16px 18px}
+.modal-row{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F0F0F0}
+.modal-row:last-child{border-bottom:none}
+.modal-key{font-size:12px;font-weight:600;color:var(--muted);width:130px;flex-shrink:0}
+.modal-val{font-size:13px;color:var(--text);flex:1;line-height:1.55}
+.modal-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.btn{font-size:12.5px;font-weight:600;padding:7px 18px;border-radius:6px;cursor:pointer;font-family:inherit;border:1.5px solid;transition:all .15s}
+.btn-pri{background:var(--accent);color:#fff;border-color:var(--accent)}.btn-pri:hover{background:#0D47A1}
+.btn-sec{background:#fff;color:var(--muted);border-color:var(--border)}.btn-sec:hover{background:#F5F5F5}
+
+#footer{background:#fff;border-top:1px solid var(--border);padding:10px 28px;display:flex;justify-content:space-between;margin-top:28px}
+#footer span{font-size:11.5px;color:var(--muted)}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="tb-brand">
+    <div>
+      <div class="tb-title">CARE-HMIS Dashboard</div>
+      <div class="tb-loc" id="tb-loc">Ramgarh District · Jharkhand</div>
+    </div>
+  </div>
+  <div class="tb-controls">
+    <div class="level-toggle">
+      <button class="lt-btn" onclick="setLevel('state')">State</button>
+      <button class="lt-btn on" onclick="setLevel('district')">District</button>
+      <button class="lt-btn" onclick="setLevel('facility')">Facility</button>
+    </div>
+    <select class="fac-sel" id="fac-sel" onchange="setFacility(this.value)">
+      <option value="sadar">Sadar Ramgarh DH</option>
+      <option value="mandu">CHC Mandu</option>
+      <option value="chaingada">PHC Chaingada</option>
+      <option value="gola">CHC Gola</option>
+      <option value="patratu">CHC Patratu</option>
+    </select>
+    <div class="period-wrap">
+      <span class="period-lbl">Viewing:</span>
+      <select class="period-sel" id="period-sel" onchange="setPeriod(this.value)">
+        <option value="month" selected>This month (May 2026)</option>
+        <option value="week">This week (5–11 May 2026)</option>
+        <option value="quarter">This quarter (Jan–Mar 2026)</option>
+        <option value="total">Total since launch (Feb 2026)</option>
+      </select>
+    </div>
+    <div class="tb-updated">Last updated: 07 May 2026, 16:46</div>
+  </div>
+</div>
+
+<!-- BREADCRUMB BAR -->
+<div id="bc-bar">
+  <span class="bc-crumb active" id="bc-root" data-base="Ramgarh District">Ramgarh District</span>
+  <span class="bc-hint" id="bc-hint">· Click any chart or bar to drill down</span>
+</div>
+
+<div class="page">
+
+<!-- 1. SUMMARY -->
+<div class="section">
+  <div class="sec-hdr">
+    <span class="sec-title">Summary</span>
+    <span class="sec-meta" id="summary-meta">May 2026 · % change vs April 2026</span>
+  </div>
+  <div id="summary-strip"></div>
+</div>
+
+<!-- 2. OPD -->
+<div class="section">
+  <div class="sec-hdr">
+    <span class="sec-title">Service Delivery — OPD</span>
+    <span class="sec-meta" id="opd-meta">May 2026 · % change vs April 2026</span>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="cc-hdr">
+      <div>
+        <div class="cc-title">Appointments vs OPD Encounters</div>
+        <div class="cc-sub">Click any bar to drill down → Facility → Department → Doctor</div>
+        <div class="cc-period" id="opd-chart-period">Showing: May 2026</div>
+      </div>
+      <div class="cc-ctrl">
+        <button class="cc-btn on" id="opd-v-month" onclick="switchOPD('month')">By month</button>
+        <button class="cc-btn" id="opd-v-dept" onclick="switchOPD('dept')">By department</button>
+        <button class="cc-btn" id="opd-v-tag" onclick="switchOPD('tag')">By patient tag</button>
+      </div>
+    </div>
+    <div class="legend-row">
+      <div class="leg-item"><div class="leg-dot" style="background:#1565C0"></div>Appointments</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#00897B"></div>Encounters</div>
+    </div>
+    <div style="position:relative;height:210px;margin-top:12px"><canvas id="opd-chart"></canvas></div>
+    <div class="drill-panel" id="dp-opd-main">
+      <div class="dp-hdr"><div class="dp-bc" id="dp-opd-main-bc">Drill down</div><button class="dp-close" onclick="closeDrill('dp-opd-main')">← Back</button></div>
+      <div class="dp-body" id="dp-opd-main-body"></div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="cc-hdr">
+      <div>
+        <div class="cc-title">Top 5 OPD Departments</div>
+        <div class="cc-sub">Click any department to see top 5 diagnoses + doctor breakdown</div>
+        <div class="cc-period" id="opd-dept-period">Showing: May 2026</div>
+      </div>
+    </div>
+    <div id="opd-dept-bars" style="margin-top:10px"></div>
+    <div class="drill-panel" id="dp-opd-dept">
+      <div class="dp-hdr"><div class="dp-bc" id="dp-opd-dept-bc">Drill down</div><button class="dp-close" onclick="closeDrill('dp-opd-dept')">← Back</button></div>
+      <div class="dp-body" id="dp-opd-dept-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. IPD -->
+<div class="section">
+  <div class="sec-hdr">
+    <span class="sec-title">Service Delivery — IPD</span>
+    <span class="sec-meta" id="ipd-meta">May 2026 · % change vs April 2026</span>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:16px">
+    <div class="chart-card">
+      <div class="cc-hdr">
+        <div>
+          <div class="cc-title">IPD Admissions by Month</div>
+          <div class="cc-sub">Click a bar → Facility breakdown → Department → Doctor</div>
+          <div class="cc-period" id="ipd-chart-period">Showing: May 2026</div>
+        </div>
+      </div>
+      <div style="position:relative;height:200px;margin-top:12px"><canvas id="ipd-chart"></canvas></div>
+      <div class="drill-panel" id="dp-ipd-month">
+        <div class="dp-hdr"><div class="dp-bc" id="dp-ipd-month-bc">Drill down</div><button class="dp-close" onclick="closeDrill('dp-ipd-month')">← Back</button></div>
+        <div class="dp-body" id="dp-ipd-month-body"></div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="cc-hdr">
+        <div>
+          <div class="cc-title">Discharge Outcomes</div>
+          <div class="cc-sub">Click any segment or row to see detail</div>
+          <div class="cc-period" id="outcome-period">Showing: May 2026</div>
+        </div>
+      </div>
+      <div class="outcome-grid">
+        <div class="donut-wrap">
+          <div style="position:relative;width:170px;height:170px"><canvas id="donut-chart"></canvas></div>
+          <div class="donut-center">
+            <div class="donut-center-num">2,773</div>
+            <div class="donut-center-lbl">discharges</div>
+          </div>
+        </div>
+        <div class="outcome-legend" id="outcome-legend"></div>
+      </div>
+      <div class="drill-panel" id="dp-outcome">
+        <div class="dp-hdr"><div class="dp-bc" id="dp-outcome-bc">Drill down</div><button class="dp-close" onclick="closeDrill('dp-outcome')">← Back</button></div>
+        <div class="dp-body" id="dp-outcome-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="cc-hdr">
+        <div>
+          <div class="cc-title">Top 5 IPD Departments</div>
+          <div class="cc-sub">Click to see top 5 admission diagnoses + doctor breakdown</div>
+          <div class="cc-period" id="ipd-dept-period">Showing: May 2026</div>
+        </div>
+      </div>
+      <div id="ipd-dept-bars" style="margin-top:10px"></div>
+      <div class="drill-panel" id="dp-ipd-dept">
+        <div class="dp-hdr"><div class="dp-bc" id="dp-ipd-dept-bc">Drill down</div><button class="dp-close" onclick="closeDrill('dp-ipd-dept')">← Back</button></div>
+        <div class="dp-body" id="dp-ipd-dept-body"></div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="cc-hdr">
+        <div>
+          <div class="cc-title">IPD Encounters by Patient Tags</div>
+          <div class="cc-sub">NHM scheme tracking · click tag for facility breakdown</div>
+          <div class="cc-period" id="ipd-tags-period">Showing: May 2026</div>
+        </div>
+      </div>
+      <div id="ipd-tags" style="margin-top:10px"></div>
+
+      <div style="margin-top:18px;padding-top:14px;border-top:1.5px solid #E0E0E0">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:15px;font-weight:700;color:var(--text)">Discharge Summaries</span>
+          <button class="cc-btn" onclick="openDiscSumDrill()">Facility → Dept → Doctor ↓</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <div><div style="font-size:28px;font-weight:300">284</div><div style="font-size:11.5px;color:var(--muted)">completed</div></div>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:12px;font-weight:700;color:var(--red)">9.1% completion rate</span>
+              <span style="font-size:11.5px;color:var(--muted)">of 3,122 IPD discharges</span>
+            </div>
+            <div style="height:9px;background:#EEEEEE;border-radius:4px;overflow:hidden">
+              <div style="width:9.1%;height:100%;background:var(--red);border-radius:4px"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:5px">2,838 missing · Action: make field mandatory in CARE</div>
+          </div>
+        </div>
+      </div>
+      <div class="drill-panel" id="dp-disc-sum">
+        <div class="dp-hdr"><div class="dp-bc" id="dp-disc-sum-bc">Discharge Summaries · Facility breakdown</div><button class="dp-close" onclick="closeDrill('dp-disc-sum')">← Back</button></div>
+        <div class="dp-body" id="dp-disc-sum-body"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. OPERATIONS -->
+<div class="section">
+  <div class="sec-hdr">
+    <span class="sec-title">Operations</span>
+    <span class="sec-meta" id="ops-meta">May 2026 · % change vs April 2026</span>
+  </div>
+
+  <div class="ops-grid">
+    <div class="ops-card" style="border-top-color:#1565C0" onclick="openOpsDrill('wait')">
+      <div class="ops-icon">⏱️</div>
+      <div class="ops-kpi-name">Patient wait time</div>
+      <div class="ops-num">6.9 <span class="ops-unit">min</span></div>
+      <div class="ops-desc">Average time from patient registration to being seen by a doctor</div>
+      <div class="ops-delta" style="color:var(--green)">↓ 0.2 min vs prev period</div>
+      <div class="ops-scope">PHC Chaingada only · query expanding to all facilities</div>
+      <div class="ops-drill-hint">Click → Facility → Department ↓</div>
+    </div>
+    <div class="ops-card" style="border-top-color:#00695C" onclick="openOpsDrill('abha')">
+      <div class="ops-icon">🔗</div>
+      <div class="ops-kpi-name">ABHA health ID linking</div>
+      <div class="ops-num">4</div>
+      <div class="ops-desc">No. of patients whose health records were scanned and shared using their ABHA health ID</div>
+      <div class="ops-delta" style="color:var(--green)">↑ 2 vs prev period</div>
+      <div class="ops-scope">PHC Chaingada only · activation pending at other facilities</div>
+      <div class="ops-drill-hint">Click → Facility breakdown ↓</div>
+    </div>
+    <div class="ops-card" style="border-top-color:#E65100" onclick="openOpsDrill('invoice')">
+      <div class="ops-icon">💰</div>
+      <div class="ops-kpi-name">Revenue collected</div>
+      <div class="ops-num">₹4.2<span class="ops-unit">L</span></div>
+      <div class="ops-desc">Total invoice value collected this period — OPD · IPD · Lab · Radiology</div>
+      <div class="ops-delta" style="color:var(--green)">↑ 8% vs prev period</div>
+      <div class="ops-scope" style="color:var(--amber)">⚠ Billing module inactive at CHCs</div>
+      <div class="ops-drill-hint">Click → Facility → Category (OPD / IPD / Lab / Radio) ↓</div>
+    </div>
+    <div class="ops-card" style="border-top-color:#4527A0" onclick="openOpsDrill('svc')">
+      <div class="ops-icon">🧪</div>
+      <div class="ops-kpi-name">Service requests raised</div>
+      <div class="ops-num">6,586</div>
+      <div class="ops-desc">Total lab, radiology, and pharmacy requests placed by doctors</div>
+      <div class="ops-delta" style="color:var(--green)">↑ 18% vs prev period</div>
+      <div class="ops-scope">Lab: 4,281 · Radiology: 1,317 · Pharmacy: 988</div>
+      <div class="ops-drill-hint">Click → Facility → Department ↓</div>
+    </div>
+  </div>
+
+  <div class="drill-panel" id="dp-ops" style="margin-bottom:16px">
+    <div class="dp-hdr"><div class="dp-bc" id="dp-ops-bc">Operations drill down</div><button class="dp-close" onclick="closeDrill('dp-ops')">← Back</button></div>
+    <div class="dp-body" id="dp-ops-body"></div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="cc-hdr">
+      <div>
+        <div class="cc-title">Service Requests — Issued vs Fulfilled</div>
+        <div class="cc-sub">Lab · Radiology · Pharmacy · Click any row to see facility breakdown</div>
+        <div class="cc-period" id="svc-period">Showing: May 2026</div>
+      </div>
+      <div style="font-size:12px;color:var(--amber);font-weight:600;background:#FFF3E0;padding:5px 11px;border-radius:5px;border:1px solid #FFCC80;white-space:nowrap;flex-shrink:0">⚠ Fulfilment rate: data pending</div>
+    </div>
+    <div id="svc-bars" style="margin-top:14px"></div>
+    <div class="drill-panel" id="dp-svc">
+      <div class="dp-hdr"><div class="dp-bc" id="dp-svc-bc">Service requests · Facility breakdown</div><button class="dp-close" onclick="closeDrill('dp-svc')">← Back</button></div>
+      <div class="dp-body" id="dp-svc-body"></div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="cc-hdr">
+      <div>
+        <div class="cc-title">Patient Referral Flow</div>
+        <div class="cc-sub">Patients referred between facility levels · Click any row for destination breakdown and reasons</div>
+        <div class="cc-period" id="ref-period">Showing: May 2026</div>
+      </div>
+    </div>
+    <div id="referral-wrap" style="margin-top:14px"></div>
+  </div>
+</div>
+
+</div><!-- .page -->
+
+<div id="footer">
+  <span>CARE-HMIS Administrative Dashboard · Ramgarh District · Jharkhand · v1.3 mockup</span>
+  <span>All figures illustrative · Data source: CARE FHIR R5</span>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div><div class="modal-title" id="modal-title"></div><div class="modal-sub" id="modal-sub"></div></div>
+      <span class="modal-close" onclick="closeModal()">×</span>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-sec" onclick="closeModal()">Close</button>
+      <button class="btn btn-pri" onclick="closeModal()">Export CSV ↗</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────────────────
+const PERIODS={
+  month:  {label:'May 2026',vs:'vs April 2026',appts:4820,opdEnc:3640,ipdEnc:839,bedOcc:78,alos:5.4,lab:6586,radio:1317,apptAbha:71,opdAbha:64,ipdAbha:52,ipdActive:37,labAbha:61,radioAbha:58,delta:{appts:'+12%',opd:'+18%',ipd:'+22%',bed:'+3pp',alos:'↓0.2d',lab:'+18%',radio:'+15%'}},
+  week:   {label:'5–11 May 2026',vs:'vs prev week',appts:1180,opdEnc:890,ipdEnc:196,bedOcc:76,alos:5.3,lab:1612,radio:321,apptAbha:72,opdAbha:65,ipdAbha:53,ipdActive:41,labAbha:62,radioAbha:59,delta:{appts:'+8%',opd:'+11%',ipd:'+14%',bed:'+2pp',alos:'↓0.1d',lab:'+10%',radio:'+9%'}},
+  quarter:{label:'Jan–Mar 2026',vs:'vs prev quarter',appts:14280,opdEnc:10820,ipdEnc:2490,bedOcc:77,alos:5.5,lab:18920,radio:3840,apptAbha:70,opdAbha:63,ipdAbha:51,ipdActive:6,labAbha:60,radioAbha:56,delta:{appts:'+215%',opd:'+198%',ipd:'+180%',bed:'+8pp',alos:'↓0.4d',lab:'+210%',radio:'+190%'}},
+  total:  {label:'Since launch (Feb 2026)',vs:'',appts:28420,opdEnc:21840,ipdEnc:4910,bedOcc:78,alos:5.4,lab:38620,radio:7820,apptAbha:68,opdAbha:61,ipdAbha:49,ipdActive:6,labAbha:58,radioAbha:54,delta:{appts:'',opd:'',ipd:'',bed:'',alos:'',lab:'',radio:''}}
+};
+const FAC_DATA={
+  state:{name:'Jharkhand State'},district:{name:'Ramgarh District'},
+  sadar:{name:'Sadar Ramgarh DH',type:'DH'},mandu:{name:'CHC Mandu',type:'CHC'},
+  chaingada:{name:'PHC Chaingada',type:'PHC'},gola:{name:'CHC Gola',type:'CHC'},patratu:{name:'CHC Patratu',type:'CHC'}
+};
+const OPD_MONTH_DATA={
+  month:  {labels:['Jan','Feb','Mar','Apr','May'],appts:[680,710,760,980,690],enc:[510,530,580,820,520]},
+  week:   {labels:['Mon','Tue','Wed','Thu','Fri','Sat'],appts:[142,168,152,178,134,116],enc:[108,128,114,138,98,88]},
+  quarter:{labels:['Jan','Feb','Mar'],appts:[680,710,760],enc:[510,530,580]},
+  total:  {labels:['Feb','Mar','Apr','May'],appts:[420,760,980,690],enc:[310,580,820,520]}
+};
+const OPD_DEPT_DATA={labels:['General Medicine','Orthopaedics','Paediatrics','Gynaecology','ENT'],appts:[1140,890,780,670,430],enc:[960,720,620,580,360]};
+const OPD_TAG_DATA ={labels:['JSY','ANC','BPL','TB','MLC'],appts:[481,320,190,88,52],enc:[420,290,165,72,44]};
+const IPD_MONTH_DATA={
+  month:  {labels:['Jan','Feb','Mar','Apr','May'],vals:[280,310,340,420,196]},
+  week:   {labels:['Mon','Tue','Wed','Thu','Fri','Sat'],vals:[32,38,34,42,28,22]},
+  quarter:{labels:['Jan','Feb','Mar'],vals:[280,310,340]},
+  total:  {labels:['Feb','Mar','Apr','May'],vals:[180,340,420,196]}
+};
+const OUTCOMES=[
+  {key:'active',  label:'Active',    val:312, pct:11.3,col:'#1565C0',def:'Currently admitted — treatment ongoing',
+   detail:{diags:['Anaemia in pregnancy (62)','Normal delivery recovery (54)','C-section recovery (48)','Malaria — severe (28)','Preeclampsia (21)'],alos:'5.4 days avg so far',beds:'78% occupied'}},
+  {key:'recovered',label:'Recovered',val:1876,pct:67.7,col:'#2E7D32',def:'Discharged after clinical recovery',
+   detail:{diags:['Normal delivery (412)','Anaemia in pregnancy (310)','ANC routine (220)','Malaria (180)','Respiratory infection (140)'],alos:'4.9 days avg'}},
+  {key:'lama',   label:'LAMA',      val:254, pct:9.2, col:'#E65100',def:'Left Against Medical Advice — patient left before doctors confirmed readiness',
+   detail:{reasons:['Financial constraints (~38%)','Travel distance (~28%)','Personal/family request (~22%)','Other (~12%)'],facs:['Sadar Ramgarh DH: 142','CHC Mandu: 58','CHC Gola: 32','CHC Patratu: 22']}},
+  {key:'dama',   label:'DAMA',      val:189, pct:6.8, col:'#6A1B9A',def:'Discharged Against Medical Advice — family or guardian requested early discharge',
+   detail:{reasons:['Family request (~45%)','Returning for family event (~28%)','Financial (~18%)','Other (~9%)'],facs:['Sadar Ramgarh DH: 98','CHC Mandu: 48','CHC Gola: 28','CHC Patratu: 15']}},
+  {key:'referred',label:'Referred',  val:142, pct:5.1, col:'#00838F',def:'Transferred to a higher facility — case exceeded local capacity',
+   detail:{destinations:['Sadar Ramgarh DH (68)','Ranchi Govt Hospital (44)','Private Tertiary (30)'],reasons:['Surgical complication (35%)','NICU requirement (28%)','Specialist need (22%)','Diagnostics (15%)']}}
+];
+const IPD_DEPTS=[{name:'Obstetrics & Gynaecology',val:312},{name:'General Medicine',val:198},{name:'Orthopaedics',val:142},{name:'Paediatrics',val:118},{name:'Emergency',val:69}];
+const IPD_DEPT_DIAGS={'Obstetrics & Gynaecology':['C-section (88)','Normal delivery — complication (72)','Anaemia in pregnancy (62)','Preeclampsia/eclampsia (54)','Gestational diabetes (36)'],'General Medicine':['Malaria — severe (48)','Typhoid fever (38)','Dengue hospitalised (32)','Pneumonia (28)','Diabetic emergency (18)'],'Orthopaedics':['Road traffic injury (52)','Fracture — lower limb (42)','Fracture — upper limb (28)','Joint infection (12)','Spinal injury (8)'],'Paediatrics':['Pneumonia — under 5 (38)','Severe anaemia (28)','Malaria — paediatric (22)','Acute diarrhoea (18)','Meningitis (12)'],'Emergency':['Road traffic accident (24)','Obstetric emergency (18)','Acute abdomen (14)','Snake/animal bite (8)','Poisoning (5)']};
+const OPD_DIAGS={'General Medicine':['Upper respiratory infection (248)','Hypertension (196)','Diabetes mellitus (164)','Malaria (140)','Typhoid fever (112)'],'Orthopaedics':['Musculoskeletal pain (312)','Fracture — closed (198)','Osteoarthritis (142)','Back pain (118)','Joint injury (96)'],'Paediatrics':['Fever (320)','Acute respiratory infection (248)','Diarrhoea (196)','Malaria — paediatric (142)','Anaemia — paediatric (112)'],'Gynaecology':['ANC — routine (520)','Anaemia in pregnancy (312)','Gestational diabetes (142)','Preeclampsia (88)','Normal delivery follow-up (68)'],'ENT':['Tonsillitis (198)','Otitis media (142)','Sinusitis (112)','Hearing loss (68)','Pharyngitis (52)']};
+const DOCTORS={'General Medicine':[{n:'Dr. Ramesh Kumar',e:312,t:'Malaria, Typhoid, Dengue'},{n:'Dr. Sanjay Singh',e:248,t:'Pneumonia, Diabetes, Hypertension'},{n:'Dr. Anita Verma',e:198,t:'Respiratory infection, Fever'}],'Orthopaedics':[{n:'Dr. Vinod Mishra',e:288,t:'RTA, Fractures, Joint injuries'},{n:'Dr. Kavita Rao',e:224,t:'Fractures, Spinal injuries'}],'Paediatrics':[{n:'Dr. Sunita Devi',e:312,t:'Pneumonia, Anaemia, Malaria'},{n:'Dr. Ashok Yadav',e:248,t:'Diarrhoea, Malaria, Fever'}],'Gynaecology':[{n:'Dr. Priya Sharma',e:422,t:'Normal delivery, C-section, ANC'},{n:'Dr. Asha Kumari',e:380,t:'Preeclampsia, C-section, GDM'},{n:'Dr. Rekha Gupta',e:298,t:'Anaemia in pregnancy, ANC'}],'ENT':[{n:'Dr. Suresh Patel',e:198,t:'Tonsillitis, Otitis, Sinusitis'},{n:'Dr. Ajay Kumar',e:162,t:'Hearing loss, ENT infections'}],'Obstetrics & Gynaecology':[{n:'Dr. Priya Sharma',e:422,t:'Normal delivery, C-section, ANC'},{n:'Dr. Asha Kumari',e:380,t:'Preeclampsia, C-section, GDM'}],'Emergency':[{n:'Dr. Manoj Tiwari',e:42,t:'RTA, Obstetric emergency, Acute abdomen'}]};
+const IPD_TAGS=[{tag:'JSY',val:481,pct:100,col:'#1565C0',bg:'#E3F2FD',fc:'#0D47A1',ch:'+12%',up:true},{tag:'JSSK',val:139,pct:58,col:'#00695C',bg:'#E0F2F1',fc:'#004D40',ch:'+7%',up:true},{tag:'ANC',val:90,pct:38,col:'#6A1B9A',bg:'#EDE7F6',fc:'#4A148C',ch:'+3%',up:true},{tag:'BPL',val:58,pct:24,col:'#E65100',bg:'#FFF3E0',fc:'#BF360C',ch:'-4%',up:false},{tag:'TB',val:12,pct:5,col:'#9E9E9E',bg:'#F5F5F5',fc:'#424242',ch:'0%',up:null}];
+const FACILITIES=[{name:'Sadar Ramgarh DH',type:'DH',opd:10420,ipd:694,abha:52,lab:5280,radio:1040,pharm:788},{name:'CHC Mandu',type:'CHC',opd:1800,ipd:102,abha:44,lab:820,radio:192,pharm:142},{name:'PHC Chaingada',type:'PHC',opd:330,ipd:0,abha:57,lab:142,radio:48,pharm:32},{name:'CHC Gola',type:'CHC',opd:250,ipd:43,abha:31,lab:96,radio:30,pharm:18},{name:'CHC Patratu',type:'CHC',opd:59,ipd:0,abha:28,lab:38,radio:7,pharm:8}];
+const FAC_IPD_MONTH={Jan:[{n:'Sadar Ramgarh DH',a:181,act:38,alos:'5.6d'},{n:'CHC Mandu',a:62,act:8,alos:'3.2d'},{n:'CHC Gola',a:37,act:5,alos:'3.8d'}],Feb:[{n:'Sadar Ramgarh DH',a:198,act:41,alos:'5.4d'},{n:'CHC Mandu',a:71,act:9,alos:'3.1d'},{n:'CHC Gola',a:41,act:6,alos:'3.6d'}],Mar:[{n:'Sadar Ramgarh DH',a:218,act:44,alos:'5.3d'},{n:'CHC Mandu',a:79,act:10,alos:'3.0d'},{n:'CHC Gola',a:43,act:7,alos:'3.5d'}],Apr:[{n:'Sadar Ramgarh DH',a:271,act:52,alos:'5.5d'},{n:'CHC Mandu',a:98,act:13,alos:'3.2d'},{n:'CHC Gola',a:51,act:8,alos:'3.7d'}],May:[{n:'Sadar Ramgarh DH',a:128,act:48,alos:'5.4d'},{n:'CHC Mandu',a:44,act:11,alos:'3.1d'},{n:'CHC Gola',a:24,act:7,alos:'3.6d'}]};
+const FAC_DEPT={'Sadar Ramgarh DH':[{d:'Obstetrics & Gynaecology',ipd:248,opd:3200},{d:'General Medicine',ipd:182,opd:3412},{d:'Orthopaedics',ipd:118,opd:1607},{d:'Paediatrics',ipd:96,opd:829},{d:'Emergency',ipd:50,opd:531}],'CHC Mandu':[{d:'Obstetrics & Gynaecology',ipd:38,opd:480},{d:'General Medicine',ipd:42,opd:680},{d:'Paediatrics',ipd:22,opd:320}],'CHC Gola':[{d:'General Medicine',ipd:28,opd:142},{d:'Obstetrics & Gynaecology',ipd:15,opd:108}]};
+const WAIT_DEPTS={'PHC Chaingada':[{d:'General Medicine',wait:'7.2 min',enc:88},{d:'Paediatrics',wait:'6.1 min',enc:52},{d:'Obstetrics',wait:'8.4 min',enc:42},{d:'Emergency',wait:'3.8 min',enc:18}]};
+const ABHA_DEPTS={'PHC Chaingada':[{d:'General Medicine',events:2,note:''},{d:'Obstetrics',events:2,note:''},{d:'Paediatrics',events:0,note:'Training scheduled'}]};
+const SVC_DEPTS={'Sadar Ramgarh DH':[{d:'Obstetrics & Gynaecology',lab:1820,radio:420,pharm:312},{d:'General Medicine',lab:1240,radio:340,pharm:248},{d:'Orthopaedics',lab:620,radio:198,pharm:142},{d:'Paediatrics',lab:412,radio:48,pharm:62},{d:'Emergency',lab:128,radio:34,pharm:24}],'CHC Mandu':[{d:'General Medicine',lab:312,radio:92,pharm:72},{d:'Obstetrics',lab:198,radio:68,pharm:48},{d:'Paediatrics',lab:72,radio:32,pharm:22}],'PHC Chaingada':[{d:'General Medicine',lab:82,radio:28,pharm:18},{d:'Obstetrics',lab:42,radio:14,pharm:10},{d:'Emergency',lab:18,radio:6,pharm:4}],'CHC Gola':[{d:'General Medicine',lab:58,radio:18,pharm:12},{d:'Obstetrics',lab:28,radio:8,pharm:4},{d:'Emergency',lab:12,radio:4,pharm:2}],'CHC Patratu':[{d:'General Medicine',lab:24,radio:4,pharm:4},{d:'Emergency',lab:14,radio:3,pharm:4}]};
+const INV_DEPTS={'Sadar Ramgarh DH':[{d:'OPD',inv:'₹82,400',coll:'₹68,200',rate:'83%'},{d:'IPD',inv:'₹1,12,800',coll:'₹94,200',rate:'84%'},{d:'Lab',inv:'₹58,400',coll:'₹46,800',rate:'80%'},{d:'Radiology',inv:'₹42,200',coll:'₹32,800',rate:'78%'}],'CHC Mandu':[{d:'OPD',inv:'₹18,400',coll:'₹14,800',rate:'80%'},{d:'IPD',inv:'₹22,800',coll:'₹17,200',rate:'75%'},{d:'Lab',inv:'₹8,200',coll:'₹6,400',rate:'78%'}]};
+
+// ── STATE ───────────────────────────────────────────────────────────────────
+let curPeriod='month',curLevel='district',curOPDView='month';
+let opdChart=null,ipdChart=null,donutChart=null;
+
+// ── HELPERS ─────────────────────────────────────────────────────────────────
+function fmt(n){return typeof n==='string'?n:n.toLocaleString()}
+function periodLabel(){return PERIODS[curPeriod].label}
+function periodMeta(){const p=PERIODS[curPeriod];return p.label+(p.vs?' · % change '+p.vs:'');}
+
+function updateAllMetas(){
+  const m=periodMeta();
+  ['summary','opd','ipd','ops'].forEach(s=>{const el=document.getElementById(s+'-meta');if(el)el.textContent=m;});
+  ['opd-chart-period','opd-dept-period','ipd-chart-period','outcome-period','ipd-dept-period','ipd-tags-period','svc-period','ref-period'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='Showing: '+periodLabel();});
+}
+
+// ── SUMMARY ─────────────────────────────────────────────────────────────────
+function renderSummary(){
+  const d=PERIODS[curPeriod];
+  document.getElementById('summary-meta').textContent=periodMeta();
+  const cards=[
+    {lbl:'Total Appointments',num:fmt(d.appts),abha:d.apptAbha,delta:d.delta.appts,scope:'All facilities · '+periodLabel()},
+    {lbl:'Total OPD Encounters',num:fmt(d.opdEnc),abha:d.opdAbha,delta:d.delta.opd,scope:'All facilities · '+periodLabel()},
+    {lbl:'Total IPD Encounters',num:fmt(d.ipdEnc),abha:d.ipdAbha,extra:d.ipdActive+'% currently active',delta:d.delta.ipd,scope:'All facilities · '+periodLabel()},
+    {lbl:'Bed Occupancy',num:d.bedOcc+'%',delta:d.delta.bed,scope:'Sadar Ramgarh DH · bed count not configured at CHCs',noAbha:true},
+    {lbl:'Avg. Length of Stay',num:d.alos+' days',delta:d.delta.alos,dn:true,scope:'All inpatient facilities · '+periodLabel(),noAbha:true},
+    {lbl:'Total Lab Tests',num:fmt(d.lab),abha:d.labAbha,delta:d.delta.lab,scope:'All facilities · '+periodLabel()},
+    {lbl:'Total Radiology Tests',num:fmt(d.radio),abha:d.radioAbha,delta:d.delta.radio,scope:'All facilities · '+periodLabel()},
+  ];
+  document.getElementById('summary-strip').innerHTML=cards.map(c=>`
+    <div class="sum-card">
+      <div class="sum-lbl">${c.lbl}</div>
+      <div class="sum-num">${c.num}</div>
+      ${!c.noAbha&&c.abha!=null?`<div class="sum-abha-row"><div class="sum-abha-bar"><div class="sum-abha-fill" style="width:${c.abha}%"></div></div><div class="sum-abha-pct">${c.abha}%</div></div><div class="sum-abha-lbl">ABHA-linked</div>`:''}
+      ${c.extra?`<div class="sum-extra">${c.extra}</div>`:''}
+      ${c.delta?`<div class="sum-delta"><span class="sum-delta-val ${c.dn?'dn':'up'}">${c.delta}</span>&nbsp;${PERIODS[curPeriod].vs||''}</div>`:''}
+      <div class="sum-scope">${c.scope}</div>
+    </div>`).join('');
+}
+
+// ── OPD CHART ───────────────────────────────────────────────────────────────
+function buildOPDChart(view){
+  let labels,appts,enc;
+  if(view==='month'){const d=OPD_MONTH_DATA[curPeriod]||OPD_MONTH_DATA.month;labels=d.labels;appts=d.appts;enc=d.enc;}
+  else if(view==='dept'){labels=OPD_DEPT_DATA.labels;appts=OPD_DEPT_DATA.appts;enc=OPD_DEPT_DATA.enc;}
+  else{labels=OPD_TAG_DATA.labels;appts=OPD_TAG_DATA.appts;enc=OPD_TAG_DATA.enc;}
+  const ctx=document.getElementById('opd-chart').getContext('2d');
+  if(opdChart)opdChart.destroy();
+  opdChart=new Chart(ctx,{type:'bar',plugins:[ChartDataLabels],
+    data:{labels,datasets:[
+      {label:'Appointments',data:appts,backgroundColor:'rgba(21,101,192,.75)',borderRadius:4},
+      {label:'Encounters',data:enc,backgroundColor:'rgba(0,137,123,.75)',borderRadius:4}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:22}},
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toLocaleString()}`}},
+        datalabels:{anchor:'end',align:'end',offset:2,font:{size:11,weight:'600'},
+          color:c=>c.datasetIndex===0?'#1565C0':'#00695C',
+          formatter:v=>v>=1000?(v/1000).toFixed(1)+'k':v,clip:false}},
+      scales:{x:{grid:{display:false},border:{display:false},ticks:{font:{size:12},color:'#757575'}},
+        y:{grid:{color:'#F5F5F5'},border:{display:false},ticks:{font:{size:11},color:'#9E9E9E'},beginAtZero:true}},
+      onClick:(e,els)=>{if(!els.length)return;
+        const lbl=labels[els[0].index];
+        if(view==='dept')openOPDDeptDrill(lbl);
+        else openOPDMonthDrill(lbl,view);
+      }
+    }
+  });
+}
+
+// ── IPD CHART ───────────────────────────────────────────────────────────────
+function buildIPDChart(){
+  const d=IPD_MONTH_DATA[curPeriod]||IPD_MONTH_DATA.month;
+  const ctx=document.getElementById('ipd-chart').getContext('2d');
+  if(ipdChart)ipdChart.destroy();
+  ipdChart=new Chart(ctx,{type:'bar',plugins:[ChartDataLabels],
+    data:{labels:d.labels,datasets:[{label:'IPD Admissions',data:d.vals,backgroundColor:'rgba(69,39,160,.75)',borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:22}},
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>`Admissions: ${c.parsed.y}`}},
+        datalabels:{anchor:'end',align:'end',offset:2,font:{size:11,weight:'600'},color:'#4527A0',formatter:v=>v,clip:false}},
+      scales:{x:{grid:{display:false},border:{display:false},ticks:{font:{size:12},color:'#757575'}},
+        y:{grid:{color:'#F5F5F5'},border:{display:false},ticks:{font:{size:11},color:'#9E9E9E'},beginAtZero:true}},
+      onClick:(e,els)=>{if(!els.length)return;openIPDMonthDrill(d.labels[els[0].index],d.vals[els[0].index]);}
+    }
+  });
+}
+
+// ── DONUT ───────────────────────────────────────────────────────────────────
+function buildDonut(){
+  const ctx=document.getElementById('donut-chart').getContext('2d');
+  if(donutChart)donutChart.destroy();
+  donutChart=new Chart(ctx,{type:'doughnut',plugins:[ChartDataLabels],
+    data:{labels:OUTCOMES.map(o=>o.label),datasets:[{data:OUTCOMES.map(o=>o.val),backgroundColor:OUTCOMES.map(o=>o.col),borderWidth:2,borderColor:'#fff',hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',layout:{padding:4},
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed.toLocaleString()} (${OUTCOMES[c.dataIndex].pct}%)`}},
+        datalabels:{display:c=>OUTCOMES[c.dataIndex].pct>=7,color:'#fff',font:{size:11,weight:'700'},formatter:(v,c)=>OUTCOMES[c.dataIndex].pct+'%'}},
+      onClick:(e,els)=>{if(els.length)openOutcomeDrill(els[0].index);}
+    }
+  });
+  document.getElementById('outcome-legend').innerHTML=OUTCOMES.map((o,i)=>`
+    <div class="out-item" id="ol-${o.key}" onclick="openOutcomeDrill(${i})">
+      <div class="out-dot" style="background:${o.col}"></div>
+      <div class="out-name">${o.label}</div>
+      <span class="out-val">${o.val.toLocaleString()}</span>
+      <span class="out-pct">${o.pct}%</span>
+    </div>`).join('');
+}
+
+// ── RENDER BARS ─────────────────────────────────────────────────────────────
+function renderOPDDepts(){
+  const max=OPD_DEPT_DATA.enc[0];
+  const total=OPD_DEPT_DATA.enc.reduce((a,b)=>a+b,0);
+  const cols=['#1565C0','#00695C','#4527A0','#00838F','#E65100'];
+  document.getElementById('opd-dept-bars').innerHTML=OPD_DEPT_DATA.labels.map((l,i)=>{
+    const pct=Math.round(OPD_DEPT_DATA.enc[i]/total*100);
+    return`<div class="hbar-row" onclick="openOPDDeptDrill('${l}')">
+      <div class="hbar-name">${l}</div>
+      <div class="hbar-track"><div class="hbar-fill" style="width:${Math.round(OPD_DEPT_DATA.enc[i]/max*100)}%;background:${cols[i]}"></div></div>
+      <div class="hbar-val">${OPD_DEPT_DATA.enc[i].toLocaleString()}</div>
+      <div style="font-size:11.5px;color:${cols[i]};font-weight:700;width:34px;text-align:right;flex-shrink:0">${pct}%</div>
+      <div class="hbar-arr">›</div>
+    </div>`;
+  }).join('');
+}
+
+function renderIPDDepts(){
+  const max=IPD_DEPTS[0].val;
+  const total=IPD_DEPTS.reduce((a,b)=>a+b.val,0);
+  const cols=['#4527A0','#1565C0','#00695C','#00838F','#E65100'];
+  document.getElementById('ipd-dept-bars').innerHTML=IPD_DEPTS.map((d,i)=>{
+    const pct=Math.round(d.val/total*100);
+    return`<div class="hbar-row" onclick="openIPDDeptDrill('${d.name}')">
+      <div class="hbar-name">${d.name}</div>
+      <div class="hbar-track"><div class="hbar-fill" style="width:${Math.round(d.val/max*100)}%;background:${cols[i]}"></div></div>
+      <div class="hbar-val">${d.val}</div>
+      <div style="font-size:11.5px;color:${cols[i]};font-weight:700;width:34px;text-align:right;flex-shrink:0">${pct}%</div>
+      <div class="hbar-arr">›</div>
+    </div>`;
+  }).join('');
+}
+
+function renderIPDTags(){
+  const vs=PERIODS[curPeriod].vs||'vs launch';
+  document.getElementById('ipd-tags').innerHTML=IPD_TAGS.map(t=>`
+    <div class="ptag-row" onclick="openTagModal('${t.tag}',${t.val})">
+      <div class="ptag-chip" style="background:${t.bg};color:${t.fc}">${t.tag}</div>
+      <div class="ptag-track"><div class="ptag-fill" style="width:${t.pct}%;background:${t.col}"></div></div>
+      <div class="ptag-val">${t.val}</div>
+      <div class="ptag-ch" style="color:${t.up===true?'var(--green)':t.up===false?'var(--red)':'var(--muted)'}">${t.ch} <span style="font-size:10px;color:var(--muted);font-weight:400">${vs}</span></div>
+    </div>`).join('');
+}
+
+function renderSvcBars(){
+  const svcs=[
+    {n:'Lab requests',issued:4281,fulfilled:null,col:'#1565C0'},
+    {n:'Radiology requests',issued:1317,fulfilled:null,col:'#4527A0'},
+    {n:'Pharmacy requests',issued:988,fulfilled:0,col:'#00695C'},
+  ];
+  const max=4281;
+  document.getElementById('svc-bars').innerHTML=svcs.map(s=>`
+    <div class="svc-bar-row" style="cursor:pointer" onclick="openSvcFacDrill('${s.n}')">
+      <div class="svc-bar-name">${s.n}</div>
+      <div class="svc-bars-col">
+        <div class="svc-bar-wrap">
+          <div class="svc-bar-lbl">Issued</div>
+          <div class="svc-track"><div class="svc-fill" style="width:${Math.round(s.issued/max*100)}%;background:${s.col}">${s.issued.toLocaleString()}</div></div>
+          <div class="svc-side">${s.issued.toLocaleString()}</div>
+          <div class="svc-rate" style="color:var(--muted)">100%</div>
+        </div>
+        <div class="svc-bar-wrap">
+          <div class="svc-bar-lbl" style="color:var(--amber)">Fulfilled</div>
+          <div class="svc-track"><div class="svc-fill" style="width:${s.fulfilled===0?0:15}%;background:#BDBDBD">&nbsp;</div></div>
+          <div class="svc-side" style="color:var(--muted)">${s.fulfilled===null?'—':s.fulfilled===0?'0':s.fulfilled}</div>
+          <div class="svc-rate" style="color:var(--amber)">${s.fulfilled===null?'— pending':'0%'}</div>
+        </div>
+      </div>
+      <div class="hbar-arr">›</div>
+    </div>`).join('');
+}
+
+function renderReferral(){
+  const lbl=periodLabel();
+  document.getElementById('referral-wrap').innerHTML=`
+    <table class="ref-tbl">
+      <thead><tr><th>From</th><th></th><th>To</th><th style="text-align:right">Patients referred</th><th>Top reasons</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr class="click" onclick="openModal('PHC → CHC referrals','24 patients referred from PHC to CHC level · ${lbl}','From:','PHC Chaingada, AAM-SHC ×2','To:','CHC Mandu (14 patients), CHC Gola (10 patients)','Top reasons:','Obstetric complication · Surgical need · Specialist referral')">
+          <td><span class="ref-level" style="background:#E8F5E9;color:#1B5E20">PHC / SHC<br><span style="font-size:10.5px;font-weight:400">Primary level · 3 facilities</span></span></td>
+          <td class="ref-arrow" style="text-align:center">→</td>
+          <td><span class="ref-level" style="background:#E3F2FD;color:#0D47A1">CHC / SDH<br><span style="font-size:10.5px;font-weight:400">Community level · 3 facilities</span></span></td>
+          <td style="text-align:right;font-size:20px;font-weight:700;color:#1B5E20">24</td>
+          <td style="font-size:12px;color:var(--muted)">Obstetric complication · Surgical need · Specialist</td>
+          <td><span class="badge b-i" style="cursor:pointer">Click for detail →</span></td>
+        </tr>
+        <tr class="click" onclick="openModal('CHC → DH referrals','38 patients referred from CHC to Sadar Ramgarh DH · ${lbl}','From:','CHC Mandu, CHC Gola, CHC Patratu','To:','Sadar Ramgarh DH','CHC absorbed:','~107 patients treated at CHC level without referring up','Top reasons:','Surgical emergency · NICU requirement · Specialist · Complex delivery')">
+          <td><span class="ref-level" style="background:#E3F2FD;color:#0D47A1">CHC / SDH<br><span style="font-size:10.5px;font-weight:400">Community level · 3 facilities</span></span></td>
+          <td class="ref-arrow" style="text-align:center">→</td>
+          <td><span class="ref-level" style="background:#FFEBEE;color:#B71C1C">Sadar Ramgarh DH<br><span style="font-size:10.5px;font-weight:400">District hospital</span></span></td>
+          <td style="text-align:right;font-size:20px;font-weight:700;color:#1565C0">38</td>
+          <td style="font-size:12px;color:var(--muted)">Surgical emergency · NICU · Specialist · Complex delivery</td>
+          <td><span class="badge b-i" style="cursor:pointer">Click for detail →</span></td>
+        </tr>
+        <tr class="click" onclick="openModal('DH → Tertiary referrals','30 patients referred out of district from Sadar Ramgarh DH · ${lbl}','From:','Sadar Ramgarh DH','To:','Ranchi Govt Hospital (44%) · Private Tertiary (56%)','DH absorbed:','664 of 694 IPD patients treated at DH without referring out','Top reasons:','Surgical complication · NICU · ICU · Specialist unavailable')">
+          <td><span class="ref-level" style="background:#FFEBEE;color:#B71C1C">Sadar Ramgarh DH<br><span style="font-size:10.5px;font-weight:400">District hospital</span></span></td>
+          <td class="ref-arrow" style="text-align:center">→</td>
+          <td><span class="ref-level" style="background:#F5F5F5;color:#616161">Tertiary / Private<br><span style="font-size:10.5px;font-weight:400">Outside district</span></span></td>
+          <td style="text-align:right;font-size:20px;font-weight:700;color:#B71C1C">30</td>
+          <td style="font-size:12px;color:var(--muted)">Surgical complication · NICU · ICU · Specialist unavailable</td>
+          <td><span class="badge b-i" style="cursor:pointer">Click for detail →</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="font-size:11.5px;color:var(--muted);margin-top:10px;display:flex;gap:20px;flex-wrap:wrap">
+      <span>Total referred across levels: <strong style="color:var(--text)">92 patients</strong></span>
+      <span>Showing: <strong style="color:var(--text)">${lbl}</strong></span>
+      <span style="color:#BDBDBD">Click any row for destination breakdown and referral reasons</span>
+    </div>`;
+}
+
+// ── DRILL CORE ───────────────────────────────────────────────────────────────
+function closeDrill(id){document.getElementById(id).classList.remove('open')}
+
+function openDrill(id,bc,body){
+  document.getElementById(id+'-bc').innerHTML=bc;
+  document.getElementById(id+'-body').innerHTML=body;
+  const el=document.getElementById(id);
+  el.classList.add('open');
+  setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+  setBreadcrumb(bc.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim());
+}
+
+// FIX: disc-sum drills now route through this helper too, updating breadcrumb
+function openDiscDrill(bc,body){
+  document.getElementById('dp-disc-sum-bc').innerHTML=bc;
+  document.getElementById('dp-disc-sum-body').innerHTML=body;
+  const el=document.getElementById('dp-disc-sum');
+  el.classList.add('open');
+  setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+  setBreadcrumb(bc.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim());
+}
+
+function setBreadcrumb(trail){
+  document.getElementById('bc-hint').style.display='none';
+  const base=document.getElementById('bc-root').dataset.base||'Ramgarh District';
+  document.getElementById('bc-root').innerHTML=`<span style="color:var(--accent);cursor:pointer;font-weight:600" onclick="resetBreadcrumb()">${base}</span> <span style="color:#BDBDBD">›</span> ${trail}`;
+  document.getElementById('bc-root').className='bc-crumb';
+}
+
+function resetBreadcrumb(){
+  document.querySelectorAll('.drill-panel').forEach(p=>p.classList.remove('open'));
+  const base=document.getElementById('bc-root').dataset.base||'Ramgarh District';
+  document.getElementById('bc-root').textContent=base;
+  document.getElementById('bc-root').className='bc-crumb active';
+  document.getElementById('bc-hint').style.display='';
+}
+
+// ── HELPER: doctor table ─────────────────────────────────────────────────────
+function docTableHTML(dept){
+  const docs=DOCTORS[dept]||[];
+  if(!docs.length)return`<div style="color:var(--muted);font-size:12px">Doctor data not available for this department.</div>`;
+  return`<table class="dp-tbl"><thead><tr><th>Doctor</th><th>Encounters</th><th>Top conditions seen</th></tr></thead><tbody>`+
+    docs.map(d=>`<tr class="click" onclick="openModal('${d.n}','Doctor encounter detail · ${dept}','Encounters this period:','${d.e}','Top conditions:','${d.t}','Department:','${dept}')">
+      <td><strong>${d.n}</strong></td><td>${d.e}</td><td style="font-size:12px;color:var(--muted)">${d.t}</td></tr>`).join('')+
+  `</tbody></table>`;
+}
+
+// ── OPD DRILLS ───────────────────────────────────────────────────────────────
+function openOPDMonthDrill(label,view){
+  const bc=`OPD · <span class="dp-bc-dim">${label}</span> · Facility breakdown`;
+  let body=`<div class="dp-note info">Appointments and encounters for <strong>${label}</strong> · ${periodLabel()}</div>`;
+  body+=`<table class="dp-tbl"><thead><tr><th>Facility</th><th>Type</th><th>Appointments</th><th>Encounters</th><th>ABHA-linked</th></tr></thead><tbody>`;
+  FACILITIES.forEach(f=>{
+    body+=`<tr class="click" onclick="openFacDeptDrill('${f.name}')">
+      <td><strong>${f.name}</strong></td><td><span class="badge b-i">${f.type}</span></td>
+      <td>${Math.round(f.opd*0.28).toLocaleString()}</td>
+      <td>${Math.round(f.opd*0.22).toLocaleString()}</td>
+      <td style="color:${f.abha<40?'var(--red)':f.abha<55?'var(--amber)':'var(--green)'};font-weight:600">${f.abha}%</td>
+    </tr>`;
+  });
+  body+=`</tbody></table><div style="font-size:12px;color:var(--muted);margin-top:8px">Click any facility → department breakdown → doctor list</div>`;
+  openDrill('dp-opd-main',bc,body);
+}
+
+function openFacDeptDrill(facName){
+  const depts=FAC_DEPT[facName]||[];
+  const bc=`OPD · <span class="dp-bc-dim">${facName}</span> · Department breakdown`;
+  let body=`<div class="dp-note info"><strong>${facName}</strong> · Encounters by department · ${periodLabel()}</div>`;
+  if(!depts.length){body+=`<div style="color:var(--muted);font-size:12px">Department data not configured for this facility.</div>`;}
+  else{
+    body+=`<table class="dp-tbl"><thead><tr><th>Department</th><th>OPD Encounters</th><th>IPD Admissions</th></tr></thead><tbody>`;
+    depts.forEach(d=>{body+=`<tr class="click" onclick="openDeptDocDrill('${d.d}','${facName}')"><td><strong>${d.d}</strong></td><td>${d.opd.toLocaleString()}</td><td>${d.ipd}</td></tr>`;});
+    body+=`</tbody></table><div style="font-size:12px;color:var(--muted);margin-top:8px">Click department → doctor breakdown</div>`;
+  }
+  openDrill('dp-opd-main',bc,body);
+}
+
+function openDeptDocDrill(dept,fac){
+  const bc=`OPD · <span class="dp-bc-dim">${fac} › ${dept}</span> · Doctor breakdown`;
+  let body=`<div class="dp-note good"><strong>${dept}</strong> at <strong>${fac}</strong> · ${periodLabel()}</div>`;
+  body+=docTableHTML(dept);
+  openDrill('dp-opd-main',bc,body);
+}
+
+function openOPDDeptDrill(dept){
+  const diags=OPD_DIAGS[dept]||[];
+  const bc=`OPD Departments · <span class="dp-bc-dim">${dept}</span>`;
+  let body=`<div class="dp-note good">Department: <strong>${dept}</strong> · ${periodLabel()}</div>`;
+  body+=`<div class="dp-two">
+    <div class="dp-panel"><div class="dp-ptitle">Top 5 diagnoses — ${dept}</div>
+      ${diags.map((d,i)=>`<div class="hbar-row" style="cursor:default">
+        <div style="font-size:12px;color:var(--muted);width:20px">${i+1}.</div>
+        <div style="flex:1;font-size:13px">${d.split(' (')[0]}</div>
+        <div style="font-size:13px;font-weight:700;width:38px;text-align:right">${d.match(/\((\d+)\)/)?.[1]||''}</div>
+      </div>`).join('')}
+    </div>
+    <div class="dp-panel"><div class="dp-ptitle">Doctor breakdown — ${dept}</div>${docTableHTML(dept)}</div>
+  </div>`;
+  openDrill('dp-opd-dept',bc,body);
+}
+
+// ── IPD DRILLS ───────────────────────────────────────────────────────────────
+function openIPDMonthDrill(month,val){
+  const facData=FAC_IPD_MONTH[month]||FAC_IPD_MONTH.May;
+  const bc=`IPD Admissions · <span class="dp-bc-dim">${month} 2026 (${val} admissions)</span> · Facility breakdown`;
+  let body=`<div class="dp-note info">IPD admissions for <strong>${month} 2026</strong> · Click a facility row to see department breakdown</div>`;
+  body+=`<table class="dp-tbl"><thead><tr><th>Facility</th><th>Admissions</th><th>Currently active</th><th>Avg. length of stay</th></tr></thead><tbody>`;
+  facData.forEach(f=>{body+=`<tr class="click" onclick="openIPDFacDeptDrill('${f.n}','${month}')"><td><strong>${f.n}</strong></td><td>${f.a}</td><td>${f.act}</td><td>${f.alos}</td></tr>`;});
+  body+=`</tbody></table><div style="font-size:12px;color:var(--muted);margin-top:8px">Click facility → department breakdown → doctor list</div>`;
+  openDrill('dp-ipd-month',bc,body);
+}
+
+function openIPDFacDeptDrill(facName,month){
+  const depts=FAC_DEPT[facName]||[];
+  const bc=`IPD · <span class="dp-bc-dim">${facName} · ${month} 2026</span> · Department breakdown`;
+  let body=`<div class="dp-note info"><strong>${facName}</strong> · IPD by department · ${month} 2026</div>`;
+  if(!depts.length){body+=`<div style="color:var(--muted)">Department data not configured for this facility.</div>`;}
+  else{
+    body+=`<table class="dp-tbl"><thead><tr><th>Department</th><th>IPD Admissions</th><th>OPD Encounters</th></tr></thead><tbody>`;
+    depts.forEach(d=>{body+=`<tr class="click" onclick="openIPDDeptDocDrill('${d.d}','${facName}')"><td><strong>${d.d}</strong></td><td>${d.ipd}</td><td>${d.opd.toLocaleString()}</td></tr>`;});
+    body+=`</tbody></table><div style="font-size:12px;color:var(--muted);margin-top:8px">Click department → doctor list</div>`;
+  }
+  openDrill('dp-ipd-month',bc,body);
+}
+
+function openIPDDeptDocDrill(dept,fac){
+  const bc=`IPD · <span class="dp-bc-dim">${fac} › ${dept}</span> · Doctor breakdown`;
+  let body=`<div class="dp-note good"><strong>${dept}</strong> at <strong>${fac}</strong> · ${periodLabel()}</div>`;
+  body+=docTableHTML(dept);
+  openDrill('dp-ipd-month',bc,body);
+}
+
+function openIPDDeptDrill(dept){
+  const diags=IPD_DEPT_DIAGS[dept]||[];
+  const bc=`IPD Departments · <span class="dp-bc-dim">${dept}</span>`;
+  let body=`<div class="dp-note info">Department: <strong>${dept}</strong> · ${periodLabel()}</div>`;
+  body+=`<div class="dp-two">
+    <div class="dp-panel"><div class="dp-ptitle">Top 5 admission diagnoses</div>
+      ${diags.map((d,i)=>`<div class="hbar-row" style="cursor:default">
+        <div style="font-size:12px;color:var(--muted);width:20px">${i+1}.</div>
+        <div style="flex:1;font-size:13px">${d.split(' (')[0]}</div>
+        <div style="font-size:13px;font-weight:700;width:38px;text-align:right">${d.match(/\((\d+)\)/)?.[1]||''}</div>
+      </div>`).join('')}
+    </div>
+    <div class="dp-panel"><div class="dp-ptitle">Doctor breakdown</div>${docTableHTML(dept)}</div>
+  </div>`;
+  openDrill('dp-ipd-dept',bc,body);
+}
+
+// ── OUTCOME DRILL ────────────────────────────────────────────────────────────
+function openOutcomeDrill(idx){
+  const o=OUTCOMES[idx];
+  document.querySelectorAll('.out-item').forEach(el=>el.classList.remove('sel'));
+  const el=document.getElementById('ol-'+o.key);if(el)el.classList.add('sel');
+  const bc=`Discharge Outcomes · <span class="dp-bc-dim" style="color:${o.col}">${o.label} — ${o.val.toLocaleString()} patients (${o.pct}%)</span>`;
+  let body=`<div class="dp-note" style="border-color:${o.col};color:${o.col};background:${o.col}12"><strong>${o.label}:</strong> ${o.def}</div>`;
+  if(o.key==='active'){
+    body+=`<div class="mini-kpis">
+      <div class="mini-kpi"><div class="mk-num" style="color:var(--accent)">${o.val}</div><div class="mk-lbl">Active patients now</div></div>
+      <div class="mini-kpi"><div class="mk-num">${o.detail.alos}</div><div class="mk-lbl">Avg. stay so far</div></div>
+      <div class="mini-kpi"><div class="mk-num" style="color:var(--amber)">78%</div><div class="mk-lbl">Bed occupancy at DH</div></div>
+    </div>
+    <div class="dp-two">
+      <div class="dp-panel"><div class="dp-ptitle">Top 5 diagnoses — active patients</div>${o.detail.diags.map(d=>`<div class="hbar-row" style="cursor:default"><div style="flex:1">${d.split(' (')[0]}</div><div style="font-weight:700">${d.match(/\((\d+)\)/)?.[1]||''}</div></div>`).join('')}</div>
+      <div class="dp-panel"><div class="dp-ptitle">Bed allocation — Sadar Ramgarh DH</div>
+        <div class="bed-grid">
+          ${['B01','B02','B03','B04','B05','B06','B07','B08','B09','B10'].map((b,i)=>`<div class="bed-pill ${i<8?'bp-occ':i===8?'bp-crit':'bp-free'}">${b}</div>`).join('')}
+          ${['B11','B12','B13','B14','B15','B16','B17','B18'].map((b,i)=>`<div class="bed-pill ${i<5?'bp-free':'bp-occ'}">${b}</div>`).join('')}
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <span class="bed-pill bp-occ" style="font-size:10px">■ Occupied</span>
+          <span class="bed-pill bp-free" style="font-size:10px">■ Free</span>
+          <span class="bed-pill bp-crit" style="font-size:10px">■ Critical</span>
+        </div>
+      </div>
+    </div>`;
+  } else if(o.key==='lama'||o.key==='dama'){
+    body+=`<div class="dp-two">
+      <div class="dp-panel"><div class="dp-ptitle">Reported reasons — ${o.label}</div>${o.detail.reasons.map(r=>`<div class="hbar-row" style="cursor:default"><div style="flex:1">${r.split('(')[0].trim()}</div><div style="font-size:12px;color:var(--muted)">${r.match(/\(([^)]+)\)/)?.[1]||''}</div></div>`).join('')}</div>
+      <div class="dp-panel"><div class="dp-ptitle">By facility</div>${o.detail.facs.map(f=>`<div class="hbar-row" style="cursor:default"><div style="flex:1">${f.split(':')[0]}</div><div style="font-weight:700">${f.split(':')[1]?.trim()}</div></div>`).join('')}</div>
+    </div>`;
+  } else if(o.key==='referred'){
+    body+=`<div class="dp-two">
+      <div class="dp-panel"><div class="dp-ptitle">Referral destinations</div>${o.detail.destinations.map(d=>`<div class="hbar-row" style="cursor:default"><div style="flex:1">${d.split(' (')[0]}</div><div style="font-weight:700">${d.match(/\((\d+)\)/)?.[1]||''}</div></div>`).join('')}</div>
+      <div class="dp-panel"><div class="dp-ptitle">Reasons for referral</div>${o.detail.reasons.map(r=>`<div class="hbar-row" style="cursor:default"><div style="flex:1">${r.split(' (')[0]}</div><div style="font-size:12px;color:var(--muted)">${r.match(/\(([^)]+)\)/)?.[1]||''}</div></div>`).join('')}</div>
+    </div>`;
+  } else {
+    body+=`<div class="dp-panel"><div class="dp-ptitle">Top diagnoses — ${o.label} discharges</div>${o.detail.diags.map(d=>`<div class="hbar-row" style="cursor:default"><div style="flex:1">${d.split(' (')[0]}</div><div style="font-weight:700">${d.match(/\((\d+)\)/)?.[1]||''}</div></div>`).join('')}<div style="font-size:12px;color:var(--muted);margin-top:8px">Avg. length of stay: ${o.detail.alos}</div></div>`;
+  }
+  openDrill('dp-outcome',bc,body);
+}
+
+// ── DISCHARGE SUMMARY DRILLS (FIX: now uses openDiscDrill for breadcrumb) ───
+function openDiscSumDrill(){
+  const bc='Discharge Summaries · Facility breakdown';
+  let body=`<div class="dp-note bad">⚠ Completion rate is only 9.1% across all facilities. 2,838 discharge summaries are missing. Making the field mandatory in CARE is the top Phase 1 action.</div>`;
+  body+=`<table class="dp-tbl"><thead><tr><th>Facility</th><th>Type</th><th>Summaries completed</th><th>Total discharges</th><th>Completion %</th></tr></thead><tbody>`;
+  [{n:'Sadar Ramgarh DH',t:'DH',done:219,total:2412},{n:'CHC Mandu',t:'CHC',done:42,total:412},{n:'CHC Gola',t:'CHC',done:23,total:298}].forEach(f=>{
+    const pct=Math.round(f.done/f.total*100);
+    body+=`<tr class="click" onclick="openDiscSumDeptDrill('${f.n}')">
+      <td><strong>${f.n}</strong></td><td><span class="badge b-i">${f.t}</span></td>
+      <td>${f.done}</td><td>${f.total.toLocaleString()}</td>
+      <td><span class="badge ${pct<15?'b-b':pct<40?'b-m':'b-g'}">${pct}%</span></td></tr>`;
+  });
+  body+=`</tbody></table><div style="font-size:12px;color:var(--muted);margin-top:8px">Click facility → department → doctor breakdown</div>`;
+  openDiscDrill(bc,body);
+}
+
+function openDiscSumDeptDrill(facName){
+  const bc=`Discharge Summaries · <span class="dp-bc-dim">${facName}</span> · Department breakdown`;
+  let body=`<div class="dp-note info"><strong>${facName}</strong> · Discharge summary completion by department</div>`;
+  const deptData=[{d:'Obstetrics & Gynaecology',done:142,total:248},{d:'General Medicine',done:48,total:182},{d:'Orthopaedics',done:18,total:118},{d:'Paediatrics',done:11,total:96}];
+  body+=`<table class="dp-tbl"><thead><tr><th>Department</th><th>Completed</th><th>Total discharges</th><th>Rate</th></tr></thead><tbody>`;
+  deptData.forEach(d=>{
+    const pct=Math.round(d.done/d.total*100);
+    body+=`<tr class="click" onclick="openDiscSumDocDrill('${d.d}','${facName}')">
+      <td><strong>${d.d}</strong></td><td>${d.done}</td><td>${d.total}</td>
+      <td><span class="badge ${pct<15?'b-b':pct<40?'b-m':'b-g'}">${pct}%</span></td></tr>`;
+  });
+  body+=`</tbody></table><div style="font-size:12px;color:var(--muted);margin-top:8px">← <span style="color:var(--accent);cursor:pointer;font-weight:600" onclick="openDiscSumDrill()">Back to facility list</span> · Click department → doctor breakdown</div>`;
+  openDiscDrill(bc,body);
+}
+
+function openDiscSumDocDrill(dept,fac){
+  const bc=`Discharge Summaries · <span class="dp-bc-dim">${fac} › ${dept}</span> · Doctor breakdown`;
+  const docs=DOCTORS[dept]||[];
+  let body=`<div class="dp-note info"><strong>${dept}</strong> at <strong>${fac}</strong> · Discharge summary completion by doctor</div>`;
+  body+=`<table class="dp-tbl"><thead><tr><th>Doctor</th><th>Summaries completed</th><th>Total discharges</th><th>Rate</th></tr></thead><tbody>`;
+  docs.forEach((d,i)=>{
+    const done=Math.round(d.e*(0.12+i*0.04));
+    const pct=Math.round(done/d.e*100);
+    body+=`<tr><td><strong>${d.n}</strong></td><td>${done}</td><td>${d.e}</td><td><span class="badge ${pct<15?'b-b':pct<40?'b-m':'b-g'}">${pct}%</span></td></tr>`;
+  });
+  body+=`</tbody></table><div style="font-size:12px;color:var(--muted);margin-top:8px">← <span style="color:var(--accent);cursor:pointer;font-weight:600" onclick="openDiscSumDeptDrill('${fac}')">Back to department list</span></div>`;
+  openDiscDrill(bc,body);
+}
+
+// ── OPS DRILLS ───────────────────────────────────────────────────────────────
+function setOpsDrill(bc,body){
+  document.getElementById('dp-ops-bc').innerHTML=bc;
+  document.getElementById('dp-ops-body').innerHTML=body;
+  const el=document.getElementById('dp-ops');
+  el.classList.add('open');
+  setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+  setBreadcrumb(bc.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim());
+}
+
+function openOpsDrill(type){
+  let bc='',body='';
+  if(type==='wait'){
+    bc='Patient wait time · Level 1: Facility';
+    body=`<div class="dp-note info">Average minutes from registration to being seen by a doctor · ${periodLabel()}</div>`;
+    body+=`<div class="dp-note warn">⚠ Active at PHC Chaingada only. Click that row → department breakdown. Other facilities: Phase 2.</div>`;
+    body+=`<table class="dp-tbl"><thead><tr><th>Facility</th><th>Type</th><th>Avg wait</th><th>vs prev period</th><th></th></tr></thead><tbody>
+      <tr class="click" onclick="openOpsDrillL2('wait','PHC Chaingada')"><td><strong>PHC Chaingada</strong></td><td><span class="badge b-i">PHC</span></td><td><strong>6.9 min</strong></td><td style="color:var(--green);font-weight:600">↓ 0.2 min</td><td><span class="badge b-g">Click → dept</span></td></tr>
+      <tr><td>Sadar Ramgarh DH</td><td><span class="badge b-i">DH</span></td><td>—</td><td>—</td><td><span class="badge b-m">Phase 2</span></td></tr>
+      <tr><td>CHC Mandu</td><td><span class="badge b-i">CHC</span></td><td>—</td><td>—</td><td><span class="badge b-m">Phase 2</span></td></tr>
+      <tr><td>CHC Gola</td><td><span class="badge b-i">CHC</span></td><td>—</td><td>—</td><td><span class="badge b-m">Phase 2</span></td></tr>
+      <tr><td>CHC Patratu</td><td><span class="badge b-i">CHC</span></td><td>—</td><td>—</td><td><span class="badge b-m">Phase 2</span></td></tr>
+    </tbody></table>`;
+  } else if(type==='invoice'){
+    bc='Revenue collected by category · Level 1: Facility';
+    body=`<div class="dp-note info">Invoice value collected vs billed · OPD · IPD · Lab · Radiology · ${periodLabel()}</div>`;
+    body+=`<table class="dp-tbl"><thead><tr><th>Facility</th><th>Type</th><th>Total invoiced</th><th>Collected</th><th>Rate</th></tr></thead><tbody>
+      <tr class="click" onclick="openOpsDrillL2('invoice','Sadar Ramgarh DH')"><td><strong>Sadar Ramgarh DH</strong></td><td><span class="badge b-i">DH</span></td><td>₹2,95,800</td><td>₹2,42,000</td><td><span class="badge b-g">82%</span></td></tr>
+      <tr class="click" onclick="openOpsDrillL2('invoice','CHC Mandu')"><td><strong>CHC Mandu</strong></td><td><span class="badge b-i">CHC</span></td><td>₹49,400</td><td>₹38,400</td><td><span class="badge b-g">78%</span></td></tr>
+      <tr><td>PHC Chaingada</td><td><span class="badge b-i">PHC</span></td><td>₹8,200</td><td>₹6,800</td><td><span class="badge b-m">83%</span></td></tr>
+      <tr><td>CHC Gola</td><td><span class="badge b-i">CHC</span></td><td>₹12,400</td><td>₹9,200</td><td><span class="badge b-m">74%</span></td></tr>
+      <tr><td>CHC Patratu</td><td><span class="badge b-i">CHC</span></td><td>₹4,800</td><td>₹3,600</td><td><span class="badge b-m">75%</span></td></tr>
+    </tbody></table>`;
+  } else if(type==='abha'){
+    bc='ABHA health ID scan-and-share · Level 1: Facility';
+    body=`<div class="dp-note info">No. of patients whose records were scanned and shared via ABHA health ID · ${periodLabel()}</div>`;
+    body+=`<table class="dp-tbl"><thead><tr><th>Facility</th><th>Type</th><th>Scan events</th><th>vs prev period</th><th></th></tr></thead><tbody>
+      <tr class="click" onclick="openOpsDrillL2('abha','PHC Chaingada')"><td><strong>PHC Chaingada</strong></td><td><span class="badge b-i">PHC</span></td><td><strong>4</strong></td><td style="color:var(--green);font-weight:600">↑ 2</td><td><span class="badge b-g">Click → dept</span></td></tr>
+      <tr><td>Sadar Ramgarh DH</td><td><span class="badge b-i">DH</span></td><td>0</td><td>—</td><td><span class="badge b-b">Not started</span></td></tr>
+      <tr><td>CHC Mandu</td><td><span class="badge b-i">CHC</span></td><td>0</td><td>—</td><td><span class="badge b-b">Not started</span></td></tr>
+      <tr><td>CHC Gola</td><td><span class="badge b-i">CHC</span></td><td>0</td><td>—</td><td><span class="badge b-b">Not started</span></td></tr>
+      <tr><td>CHC Patratu</td><td><span class="badge b-i">CHC</span></td><td>0</td><td>—</td><td><span class="badge b-b">Not started</span></td></tr>
+    </tbody></table>`;
+  } else {
+    bc='Service requests — Issued vs Fulfilled · Level 1: Facility';
+    body=`<div class="dp-note info">Lab · Radiology · Pharmacy requests placed by doctors · ${periodLabel()}</div>`;
+    body+=`<div class="dp-note warn">⚠ Fulfilment rate query not yet built — issued counts only (Phase 1 action).</div>`;
+    body+=`<table class="dp-tbl"><thead><tr><th>Facility</th><th>Type</th><th>Lab issued</th><th>Radiology</th><th>Pharmacy</th><th>Total</th></tr></thead><tbody>`;
+    FACILITIES.forEach(f=>{body+=`<tr class="click" onclick="openOpsDrillL2('svc','${f.name}')"><td><strong>${f.name}</strong></td><td><span class="badge b-i">${f.type}</span></td><td>${f.lab.toLocaleString()}</td><td>${f.radio}</td><td>${f.pharm}</td><td><strong>${(f.lab+f.radio+f.pharm).toLocaleString()}</strong></td></tr>`;});
+    body+=`</tbody></table><div style="font-size:12px;color:var(--muted);margin-top:8px">Click any facility → department breakdown</div>`;
+  }
+  setOpsDrill(bc,body);
+}
+
+function openOpsDrillL2(type,facName){
+  let bc='',body='';
+  const backLink=`<div style="font-size:12px;color:var(--muted);margin-top:12px;padding-top:8px;border-top:1px solid #F0F0F0">← <span style="color:var(--accent);cursor:pointer;font-weight:600" onclick="openOpsDrill('${type}')">Back to facility list</span></div>`;
+  if(type==='wait'){
+    const depts=WAIT_DEPTS[facName]||[];
+    bc=`Patient wait time · ${facName} · Level 2: Department`;
+    body=`<div class="dp-note good"><strong>${facName}</strong> — avg registration-to-doctor time by department · ${periodLabel()}</div>`;
+    if(!depts.length){body+=`<div style="color:var(--muted);padding:8px 0">Department-level wait time not available for this facility.</div>`;}
+    else{
+      body+=`<table class="dp-tbl"><thead><tr><th>Department</th><th>Avg wait time</th><th>OPD encounters</th><th>vs 7-min target</th></tr></thead><tbody>`;
+      depts.forEach(d=>{const m=parseFloat(d.wait);const ok=m<=7;body+=`<tr><td><strong>${d.d}</strong></td><td style="font-weight:700">${d.wait}</td><td>${d.enc.toLocaleString()}</td><td style="color:${ok?'var(--green)':'var(--amber)'};font-weight:600">${ok?'✓ Within target':'⬆ Above target'}</td></tr>`;});
+      body+=`</tbody></table>`;
+    }
+  } else if(type==='invoice'){
+    const cats=INV_DEPTS[facName]||[];
+    bc=`Revenue · ${facName} · Level 2: Category`;
+    body=`<div class="dp-note good"><strong>${facName}</strong> — invoiced vs collected by category · ${periodLabel()}</div>`;
+    if(!cats.length){body+=`<div style="color:var(--muted);padding:8px 0">Category-level data not available. Billing module may not be active at this facility.</div>`;}
+    else{
+      body+=`<table class="dp-tbl"><thead><tr><th>Category</th><th>Total invoiced</th><th>Collected</th><th>Collection rate</th></tr></thead><tbody>`;
+      cats.forEach(c=>{const r=parseInt(c.rate);body+=`<tr><td><strong>${c.d}</strong></td><td>${c.inv}</td><td style="font-weight:700">${c.coll}</td><td><span class="badge ${r>=80?'b-g':r>=65?'b-m':'b-b'}">${c.rate}</span></td></tr>`;});
+      body+=`</tbody></table>`;
+    }
+  } else if(type==='abha'){
+    const depts=ABHA_DEPTS[facName]||[];
+    bc=`ABHA scan-and-share · ${facName} · Level 2: Department`;
+    body=`<div class="dp-note good"><strong>${facName}</strong> — ABHA scan events by department · ${periodLabel()}</div>`;
+    if(!depts.length){body+=`<div style="color:var(--muted);padding:8px 0">ABHA scan-and-share not yet activated at this facility.</div>`;}
+    else{
+      body+=`<table class="dp-tbl"><thead><tr><th>Department</th><th>Scan events</th><th>Note</th></tr></thead><tbody>`;
+      depts.forEach(d=>{body+=`<tr><td><strong>${d.d}</strong></td><td style="font-weight:700">${d.events}</td><td style="font-size:12px;color:var(--muted)">${d.note||'Active'}</td></tr>`;});
+      body+=`</tbody></table>`;
+    }
+  } else {
+    const depts=SVC_DEPTS[facName]||[];
+    bc=`Service requests · ${facName} · Level 2: Department`;
+    body=`<div class="dp-note good"><strong>${facName}</strong> — lab · radiology · pharmacy by department · ${periodLabel()}</div>`;
+    body+=`<div class="dp-note warn">⚠ Fulfilment rate not yet computable. Issued counts only.</div>`;
+    if(!depts.length){body+=`<div style="color:var(--muted);padding:8px 0">Department-level data not configured.</div>`;}
+    else{
+      body+=`<table class="dp-tbl"><thead><tr><th>Department</th><th>Lab issued</th><th>Radiology</th><th>Pharmacy</th><th>Total</th></tr></thead><tbody>`;
+      depts.forEach(d=>{body+=`<tr><td><strong>${d.d}</strong></td><td>${d.lab.toLocaleString()}</td><td>${d.radio}</td><td>${d.pharm}</td><td><strong>${(d.lab+d.radio+d.pharm).toLocaleString()}</strong></td></tr>`;});
+      body+=`</tbody></table>`;
+    }
+  }
+  body+=backLink;
+  setOpsDrill(bc,body);
+}
+
+function openSvcFacDrill(name){
+  const facName=FACILITIES.find(f=>f.name.includes(name.split(' ')[0]))?.name||'Sadar Ramgarh DH';
+  openOpsDrillL2('svc',facName);
+}
+
+// ── MODAL ────────────────────────────────────────────────────────────────────
+function openTagModal(tag,val){
+  openModal(`IPD by tag: ${tag}`,`${val} encounters tagged ${tag} · ${periodLabel()}`,
+    'Facility breakdown:',FACILITIES.filter(f=>f.ipd>0).map(f=>`${f.name}: ~${Math.round(f.ipd*0.18)} patients`).join(' · '),
+    'vs prev period:',`See ${tag} tag in IPD tags panel for trend`,
+    'Action:','Click Export CSV for patient-level list');
+}
+
+function openModal(title,sub,...rows){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-sub').textContent=sub||'';
+  document.getElementById('modal-body').innerHTML=rows.filter(Boolean).map((r,i)=>{
+    if(i%2===0)return null;
+    return`<div class="modal-row"><div class="modal-key">${rows[i-1]}</div><div class="modal-val">${r}</div></div>`;
+  }).filter(Boolean).join('');
+  document.getElementById('overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('overlay').classList.remove('open')}
+
+// ── CONTROLS ─────────────────────────────────────────────────────────────────
+function setLevel(l){
+  curLevel=l;
+  document.querySelectorAll('.lt-btn').forEach((b,i)=>{b.classList.toggle('on',['state','district','facility'][i]===l)});
+  document.getElementById('fac-sel').style.display=l==='facility'?'block':'none';
+  const names={state:'Jharkhand State',district:'Ramgarh District · Jharkhand',facility:'Sadar Ramgarh DH'};
+  const bases={state:'Jharkhand State',district:'Ramgarh District',facility:'Sadar Ramgarh DH'};
+  document.getElementById('tb-loc').textContent=names[l];
+  document.getElementById('bc-root').textContent=bases[l];
+  document.getElementById('bc-root').dataset.base=bases[l];
+  document.getElementById('bc-root').className='bc-crumb active';
+  document.getElementById('bc-hint').style.display='';
+  document.querySelectorAll('.drill-panel').forEach(p=>p.classList.remove('open'));
+  renderSummary();
+}
+
+function setFacility(key){
+  const f=FAC_DATA[key];if(!f)return;
+  document.getElementById('tb-loc').textContent=f.name+' · Ramgarh District';
+  document.getElementById('bc-root').textContent=f.name;
+  document.getElementById('bc-root').dataset.base=f.name;
+  document.getElementById('bc-root').className='bc-crumb active';
+  document.querySelectorAll('.drill-panel').forEach(p=>p.classList.remove('open'));
+}
+
+function setPeriod(p){
+  curPeriod=p;
+  renderSummary();
+  updateAllMetas();
+  buildOPDChart(curOPDView);
+  buildIPDChart();
+  renderIPDTags();
+  renderReferral();
+  document.querySelectorAll('.drill-panel').forEach(p=>p.classList.remove('open'));
+  resetBreadcrumb();
+}
+
+function switchOPD(view){
+  curOPDView=view;
+  ['month','dept','tag'].forEach(v=>document.getElementById('opd-v-'+v).classList.toggle('on',v===view));
+  buildOPDChart(view);
+  closeDrill('dp-opd-main');
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+Chart.unregister(ChartDataLabels);
+Chart.defaults.font.family="'Helvetica Neue',Arial,sans-serif";
+Chart.defaults.color='#757575';
+Chart.defaults.plugins.legend.display=false;
+Chart.defaults.animation.duration=400;
+
+document.getElementById('bc-root').dataset.base='Ramgarh District';
+renderSummary();
+updateAllMetas();
+buildOPDChart('month');
+buildIPDChart();
+buildDonut();
+renderOPDDepts();
+renderIPDDepts();
+renderIPDTags();
+renderSvcBars();
+renderReferral();
+</script>
+</body>
+</html>
