@@ -48,7 +48,7 @@ Designs/
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-org/designs.git
+git clone https://github.com/care-ecosystem/Designs.git
 cd designs
 ```
 
