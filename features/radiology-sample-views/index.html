@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Browser — Care Ecosystem</title>
+<style>
+  :root{
+    --ink:#0f1b1f;
+    --paper:#eef2f1;
+    --panel:#ffffff;
+    --line:#d7dedc;
+    --accent:#1f6f5c;
+    --mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+    --sans: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    min-height:100vh;
+  }
+  header{
+    padding:30px 6vw 18px;
+    border-bottom:1px solid var(--line);
+    background:var(--panel);
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:8px;
+  }
+  h1{
+    margin:0 0 6px;
+    font-size:clamp(26px,3.6vw,38px);
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .sub{
+    color:#4c5a57;
+    font-size:14.5px;
+    max-width:680px;
+    line-height:1.5;
+  }
+
+  .toolbar{
+    padding:16px 6vw;
+    background:var(--panel);
+    border-bottom:1px solid var(--line);
+    position:sticky;
+    top:0;
+    z-index:5;
+  }
+  .search-row{
+    display:flex;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .search-row input{
+    flex:1;
+    font-family:var(--sans);
+    font-size:14px;
+    padding:10px 14px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:var(--paper);
+    outline:none;
+  }
+  .search-row input:focus{ border-color:var(--accent); }
+  .filters{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .chip{
+    font-family:var(--mono);
+    font-size:12px;
+    padding:6px 12px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:var(--paper);
+    cursor:pointer;
+    color:#33403d;
+    transition:all .15s ease;
+    user-select:none;
+    white-space:nowrap;
+  }
+  .chip .n{ opacity:.55; margin-left:4px; }
+  .chip:hover{ border-color:var(--accent); }
+  .chip.active{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:#fff;
+  }
+
+  main{
+    padding:26px 6vw 80px;
+  }
+  .count{
+    font-family:var(--mono);
+    font-size:12px;
+    color:#5f6c69;
+    margin-bottom:16px;
+    letter-spacing:.04em;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:18px;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+    cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    display:flex;
+    flex-direction:column;
+  }
+  .card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 12px 24px -16px rgba(15,27,31,.35);
+    border-color:var(--accent);
+  }
+  .card-preview{
+    height:110px;
+    position:relative;
+    display:flex;
+    align-items:flex-end;
+    overflow:hidden;
+    background:#0c1718;
+    padding:10px 14px;
+    gap:6px;
+    flex-wrap:wrap;
+    align-content:flex-end;
+  }
+  .mod-pill{
+    font-family:var(--mono);
+    font-size:11px;
+    font-weight:700;
+    padding:3px 8px;
+    border-radius:4px;
+    color:#0c1718;
+  }
+  .card-body{
+    padding:14px 16px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    flex:1;
+  }
+  .card-body h3{
+    margin:0;
+    font-size:15.5px;
+    font-weight:700;
+    line-height:1.3;
+  }
+  .card-body .patient{
+    font-size:12.5px;
+    color:#5f6c69;
+  }
+  .meta{
+    display:flex;
+    justify-content:space-between;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--accent);
+    margin-top:8px;
+    padding-top:9px;
+    border-top:1px dashed var(--line);
+  }
+  .meta .date{ color:#5f6c69; }
+
+  .empty{
+    text-align:center;
+    padding:60px 20px;
+    color:#5f6c69;
+    font-family:var(--mono);
+    font-size:13px;
+  }
+
+  /* Modal */
+  .overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(8,14,15,.78);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:100;
+    padding:4vh 4vw;
+  }
+  .overlay.open{ display:flex; }
+  .modal{
+    background:#000;
+    width:min(1300px,94vw);
+    height:90vh;
+    border-radius:10px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    box-shadow:0 30px 60px rgba(0,0,0,.5);
+    border:1px solid #2b2f2f;
+  }
+  .modal-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px 18px;
+    background:#11181a;
+    color:#e7ece9;
+    font-family:var(--mono);
+    font-size:12.5px;
+    gap:12px;
+  }
+  .modal-head .title{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    overflow:hidden;
+  }
+  .modal-head .title span.name{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent); flex:none; }
+  .close-btn{
+    background:none;
+    border:1px solid #3a4240;
+    color:#e7ece9;
+    font-family:var(--mono);
+    font-size:12px;
+    padding:6px 12px;
+    border-radius:6px;
+    cursor:pointer;
+    flex:none;
+  }
+  .close-btn:hover{ border-color:#e0805a; color:#e0805a; }
+  .modal iframe{
+    flex:1;
+    width:100%;
+    border:0;
+    background:#000;
+  }
+
+  @media (max-width:640px){
+    header, .toolbar, main{ padding-left:5vw; padding-right:5vw; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Care Ecosystem &middot; DICOMweb Index</div>
+  <h1>Study Browser</h1>
+  <div class="sub">81 studies pulled from the dataset, each tagged with its real modality codes. Filter by modality, then open a study to render it directly in the OHIF viewer with its actual StudyInstanceUID.</div>
+</header>
+
+<div class="toolbar">
+  <div class="search-row">
+    <input type="text" id="searchInput" placeholder="Search by description, patient, or study UID…">
+  </div>
+  <div class="filters" id="filters"></div>
+</div>
+
+<main>
+  <div class="count" id="count"></div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="title"><span class="dot"></span><span class="name" id="modalTitle">Viewer</span></div>
+      <button class="close-btn" id="closeBtn">CLOSE ✕</button>
+    </div>
+    <iframe id="viewerFrame" src="" allow="fullscreen"></iframe>
+  </div>
+</div>
+
+<script>
+const CONFIG_URL = "./studies-config.json";
+
+let VIEWER_BASE = "";
+let VIEWER_PARAM = "StudyInstanceUIDs";
+let STUDIES = [];
+
+// Modality display names + colors
+const MODALITY_INFO = {
+  CT:   { name: "CT — Computed Tomography",      color: "#7fd9bd" },
+  MR:   { name: "MR — Magnetic Resonance",        color: "#9ab8f2" },
+  PT:   { name: "PT — Positron Emission Tomography", color: "#f5dd7a" },
+  US:   { name: "US — Ultrasound",                color: "#f2c98a" },
+  CR:   { name: "CR — Computed Radiography",      color: "#c7baf0" },
+  DX:   { name: "DX — Digital Radiography",       color: "#c7baf0" },
+  MG:   { name: "MG — Mammography",               color: "#f0a8c1" },
+  NM:   { name: "NM — Nuclear Medicine",          color: "#f5dd7a" },
+  XA:   { name: "XA — X-Ray Angiography",         color: "#f3a48f" },
+  RF:   { name: "RF — Radio Fluoroscopy",         color: "#f3a48f" },
+  SC:   { name: "SC — Secondary Capture",         color: "#a9bcc1" },
+  DOC:  { name: "DOC — Document",                 color: "#a9bcc1" },
+  SR:   { name: "SR — Structured Report",         color: "#bfe3a9" },
+  SEG:  { name: "SEG — Segmentation",             color: "#bfe3a9" },
+  RTSTRUCT: { name: "RTSTRUCT — RT Structure Set", color: "#f5a3a3" },
+  RTDOSE:   { name: "RTDOSE — RT Dose",            color: "#f5a3a3" },
+  RTPLAN:   { name: "RTPLAN — RT Plan",            color: "#f5a3a3" },
+  SM:   { name: "SM — Slide Microscopy",          color: "#d9a9e3" },
+  OT:   { name: "OT — Other",                     color: "#cfd6d4" },
+  ECG:  { name: "ECG — Electrocardiography",      color: "#f4b8b8" },
+  OP:   { name: "OP — Ophthalmic Photography",    color: "#a3d4d8" },
+  OPT:  { name: "OPT — Ophthalmic Tomography",    color: "#a3d4d8" },
+  XC:   { name: "XC — External Camera Photo",     color: "#cfd6d4" },
+  OAM:  { name: "OAM — Ophthalmic Axial Measurement", color: "#a3d4d8" },
+  CTPT: { name: "CTPT — Fused CT/PET",            color: "#f5dd7a" },
+  REG:  { name: "REG — Spatial Registration",     color: "#bfe3a9" },
+  PR:   { name: "PR — Presentation State",        color: "#cfd6d4" },
+  RWV:  { name: "RWV — Real World Value Map",     color: "#bfe3a9" },
+  KO:   { name: "KO — Key Object Selection",      color: "#cfd6d4" },
+  ANN:  { name: "ANN — Annotation",               color: "#bfe3a9" },
+  DS:   { name: "DS — Digital Subtraction",       color: "#f3a48f" },
+  DR:   { name: "DR — Digital Radiography",       color: "#c7baf0" },
+  BM:   { name: "BM — Basic Text SR / Bookmark",  color: "#cfd6d4" },
+};
+
+function modInfo(code){
+  return MODALITY_INFO[code] || { name: code, color: "#cfd6d4" };
+}
+
+function formatDate(d){
+  if(!d || d.length !== 8) return "Date unknown";
+  return `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`;
+}
+
+let modalityCounts = {};
+let sortedMods = [];
+
+const filtersEl = document.getElementById('filters');
+const gridEl = document.getElementById('grid');
+const countEl = document.getElementById('count');
+const searchInput = document.getElementById('searchInput');
+
+let activeFilter = "All";
+let searchTerm = "";
+
+function computeModalityCounts(){
+  modalityCounts = {};
+  STUDIES.forEach(s => s.modalities.forEach(m => {
+    modalityCounts[m] = (modalityCounts[m] || 0) + 1;
+  }));
+  sortedMods = Object.keys(modalityCounts).sort((a,b) => modalityCounts[b] - modalityCounts[a]);
+}
+
+function renderFilters(){
+  const chips = [`<button class="chip ${activeFilter==='All'?'active':''}" data-mod="All">All<span class="n">${STUDIES.length}</span></button>`]
+    .concat(sortedMods.map(m =>
+      `<button class="chip ${activeFilter===m?'active':''}" data-mod="${m}">${m}<span class="n">${modalityCounts[m]}</span></button>`
+    ));
+  filtersEl.innerHTML = chips.join('');
+  filtersEl.querySelectorAll('.chip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      activeFilter = btn.dataset.mod;
+      renderFilters();
+      renderGrid();
+    });
+  });
+}
+
+function matchesSearch(s, term){
+  if(!term) return true;
+  term = term.toLowerCase();
+  return (s.desc||'').toLowerCase().includes(term)
+    || (s.patient||'').toLowerCase().includes(term)
+    || (s.pid||'').toLowerCase().includes(term)
+    || (s.uid||'').toLowerCase().includes(term)
+    || s.modalities.some(m => m.toLowerCase().includes(term));
+}
+
+function renderGrid(){
+  let items = activeFilter === "All" ? STUDIES : STUDIES.filter(s => s.modalities.includes(activeFilter));
+  items = items.filter(s => matchesSearch(s, searchTerm));
+
+  countEl.textContent = `${items.length} stud${items.length===1?'y':'ies'} shown`;
+
+  if(items.length === 0){
+    gridEl.innerHTML = '';
+    countEl.insertAdjacentHTML('afterend', '');
+    gridEl.innerHTML = `<div class="empty" style="grid-column:1/-1;">No studies match this filter or search.</div>`;
+    return;
+  }
+
+  gridEl.innerHTML = items.map((s, idx) => {
+    const pills = s.modalities.map(m => {
+      const info = modInfo(m);
+      return `<span class="mod-pill" style="background:${info.color}">${m}</span>`;
+    }).join('');
+    return `
+    <div class="card" data-idx="${STUDIES.indexOf(s)}">
+      <div class="card-preview">${pills}</div>
+      <div class="card-body">
+        <h3>${escapeHtml(s.desc)}</h3>
+        <div class="patient">${escapeHtml(s.patient)}${s.pid && s.pid !== s.patient ? ' · ' + escapeHtml(s.pid) : ''}</div>
+        <div class="meta">
+          <span class="date">${formatDate(s.date)}</span>
+          <span>${s.series} series · ${s.instances} inst.</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  gridEl.querySelectorAll('.card').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      const idx = parseInt(card.dataset.idx, 10);
+      openModal(STUDIES[idx]);
+    });
+  });
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+const overlay = document.getElementById('overlay');
+const frame = document.getElementById('viewerFrame');
+const modalTitle = document.getElementById('modalTitle');
+const closeBtn = document.getElementById('closeBtn');
+
+function openModal(s){
+  modalTitle.textContent = `${s.desc} — ${s.modalities.join('/')} — ${s.patient}`;
+  const sep = VIEWER_BASE.includes('?') ? '&' : '?';
+  frame.src = `${VIEWER_BASE}${sep}${VIEWER_PARAM}=${encodeURIComponent(s.uid)}`;
+  overlay.classList.add('open');
+}
+function closeModal(){
+  overlay.classList.remove('open');
+  frame.src = "";
+}
+closeBtn.addEventListener('click', closeModal);
+overlay.addEventListener('click', e=>{ if(e.target === overlay) closeModal(); });
+document.addEventListener('keydown', e=>{ if(e.key === 'Escape') closeModal(); });
+
+searchInput.addEventListener('input', e=>{
+  searchTerm = e.target.value;
+  renderGrid();
+});
+
+async function init(){
+  countEl.textContent = "Loading studies…";
+  try{
+    const res = await fetch(CONFIG_URL, { cache: "no-store" });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const config = await res.json();
+
+    VIEWER_BASE = config.viewerBaseUrl || "";
+    VIEWER_PARAM = config.studyUidParam || "StudyInstanceUIDs";
+    STUDIES = Array.isArray(config.studies) ? config.studies : [];
+
+    computeModalityCounts();
+    renderFilters();
+    renderGrid();
+  }catch(err){
+    gridEl.innerHTML = `<div class="empty" style="grid-column:1/-1;">
+      Couldn't load <code>${CONFIG_URL}</code> — ${err.message}.<br><br>
+      Make sure <strong>studies-config.json</strong> sits next to this HTML file, and that you're
+      viewing this page over <strong>http(s)://</strong> (a local server) rather than opening it
+      directly as a <strong>file://</strong> path, since browsers block fetch() for local files.
+    </div>`;
+    countEl.textContent = "0 studies shown";
+  }
+}
+
+init();
+
+</script>
+
+</body>
+</html>

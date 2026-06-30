@@ -1,6 +1,18 @@
 {
   "features": [
     {
+      "id": "radiology-sample-views",
+      "name": "Radiology Samples",
+      "description": "Radiology samples to get some understanding of ohif viewers",
+      "status": "Draft",
+      "dateAdded": "2026-06-30",
+      "path": "features/radiology-sample-views/index.html",
+      "tags": [
+        "ui",
+        "ohif"
+      ]
+    },
+    {
       "id": "radiology-e2e-advanced",
       "name": "radiology e2e advanced",
       "description": "radiology e2e flow advanced",
