@@ -1,0 +1,1062 @@
+{
+  "viewerBaseUrl": "https://care-ecosystem.github.io/Viewers/viewer",
+  "studyUidParam": "StudyInstanceUIDs",
+  "studies": [
+    {
+      "uid": "1.2.840.113619.2.290.3.3767434740.232.1619607454.466",
+      "patient": "FOR TEST",
+      "pid": "QIPCM123",
+      "desc": "Untitled Study",
+      "date": "20210428",
+      "modalities": [
+        "CT",
+        "PT"
+      ],
+      "series": 4,
+      "instances": 436
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.7009.2403.871108593056125491804754960339",
+      "patient": "ACRIN-NSCLC-FDG-PET-042",
+      "pid": "ACRIN-NSCLC-FDG-PET-042",
+      "desc": "WB PET/CT",
+      "date": "19600116",
+      "modalities": [
+        "PT",
+        "CT"
+      ],
+      "series": 4,
+      "instances": 934
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.7009.2403.334240657131972136850343327463",
+      "patient": "ACRIN-NSCLC-FDG-PET-042",
+      "pid": "ACRIN-NSCLC-FDG-PET-042",
+      "desc": "LUNG DELAYS",
+      "date": "19600116",
+      "modalities": [
+        "CT",
+        "PT",
+        "SR"
+      ],
+      "series": 6,
+      "instances": 408
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.4334.1501.772823147212833057678103865443",
+      "patient": "AMC-001",
+      "pid": "AMC-001",
+      "desc": "CT Thorax",
+      "date": "19940810",
+      "modalities": [
+        "CT",
+        "SR"
+      ],
+      "series": 3,
+      "instances": 255
+    },
+    {
+      "uid": "2.16.840.1.114362.1.11972228.22789312658.616067305.306.2",
+      "patient": "CTA Head and Neck",
+      "pid": "NEW_PATIENT_ID",
+      "desc": "CT NECK SOFT TISSUE  W/ CONTR",
+      "date": "20230511",
+      "modalities": [
+        "CT"
+      ],
+      "series": 1,
+      "instances": 295
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.4792.2001.105216574054253895819671475627",
+      "patient": "SIIM^Sally",
+      "pid": "BreastDx-01-0003",
+      "desc": "Digital Diagnostic Mammogram Bilateral",
+      "date": "20080412",
+      "modalities": [
+        "MG"
+      ],
+      "series": 6,
+      "instances": 6
+    },
+    {
+      "uid": "61.7.93273854116647800470730671671118421206",
+      "patient": "ABD_LYMPH_008",
+      "pid": "ABD_LYMPH_008",
+      "desc": "abdominal_lymph_nodes",
+      "date": "20140914",
+      "modalities": [
+        "CT",
+        "SEG"
+      ],
+      "series": 2,
+      "instances": 644
+    },
+    {
+      "uid": "1.3.6.1.4.1.5962.99.1.1706.4009.192455081946878476141947586891",
+      "patient": "TCGA-CV-5973",
+      "pid": "TCGA-CV-5973",
+      "desc": "NECK/AXA",
+      "date": "19950324",
+      "modalities": [
+        "RTDOSE",
+        "RTPLAN",
+        "RTSTRUCT",
+        "CT"
+      ],
+      "series": 4,
+      "instances": 103
+    },
+    {
+      "uid": "61.7.110976287009623783394893059131426578073",
+      "patient": "MED_LYMPH_001",
+      "pid": "MED_LYMPH_001",
+      "desc": "mediastinal_lymph_nodes",
+      "date": "20140914",
+      "modalities": [
+        "CT",
+        "SEG"
+      ],
+      "series": 3,
+      "instances": 668
+    },
+    {
+      "uid": "1.2.124.113532.10.122.1.203.20051130.122937.2950157",
+      "patient": "Sssssss^Jsssss",
+      "pid": "021234567",
+      "desc": "abdomen^liver",
+      "date": "20051130",
+      "modalities": [
+        "MR"
+      ],
+      "series": 1,
+      "instances": 1
+    },
+    {
+      "uid": "1.2.276.0.7230010.3.1.2.447481088.1.1669202398.851612",
+      "patient": "DATSCAN1",
+      "pid": "DATSCAN1",
+      "desc": "CERVEAU DATSCAN",
+      "date": "20221121",
+      "modalities": [
+        "NM"
+      ],
+      "series": 1,
+      "instances": 5
+    },
+    {
+      "uid": "1.2.840.113619.2.290.3.3767434740.838.1526468636.966",
+      "patient": "PMH1B",
+      "pid": "201805161",
+      "desc": "Untitled Study",
+      "date": "20180516",
+      "modalities": [
+        "CT",
+        "PT"
+      ],
+      "series": 2,
+      "instances": 218
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.3671.4754.298665348758363466150039312520",
+      "patient": "PCAMPMRI-00012",
+      "pid": "PCAMPMRI-00012",
+      "desc": "PCAMPMRI",
+      "date": "19951215",
+      "modalities": [
+        "SEG",
+        "MR"
+      ],
+      "series": 8,
+      "instances": 140
+    },
+    {
+      "uid": "1.3.6.1.4.1.5962.99.1.2968617883.1314880426.1493322302363.3.0",
+      "patient": "PATIENT^FSRT",
+      "pid": "PYFSRT01",
+      "desc": "Untitled Study",
+      "date": "20170411",
+      "modalities": [
+        "CT",
+        "RTSTRUCT"
+      ],
+      "series": 2,
+      "instances": 263
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.1706.8374.643249677828306008300337414785",
+      "patient": "HCC_004",
+      "pid": "HCC_004",
+      "desc": "LIVER/PELVIS",
+      "date": "19971006",
+      "modalities": [
+        "CT",
+        "SEG"
+      ],
+      "series": 4,
+      "instances": 179
+    },
+    {
+      "uid": "2.25.103659964951665749659160840573802789777",
+      "patient": "TCGA-02-0006",
+      "pid": "TCGA-02-0006",
+      "desc": "Histopathology",
+      "date": "20090120",
+      "modalities": [
+        "SM"
+      ],
+      "series": 4,
+      "instances": 17
+    },
+    {
+      "uid": "2.25.141277760791347900862109212450152067508",
+      "patient": "C3L-00088",
+      "pid": "C3L-00088",
+      "desc": "Histopathology",
+      "date": "20160811",
+      "modalities": [
+        "SM"
+      ],
+      "series": 3,
+      "instances": 18
+    },
+    {
+      "uid": "2.25.275741864483510678566144889372061815320",
+      "patient": "NCT00047385",
+      "pid": "NCT00047385",
+      "desc": "Histopathology",
+      "date": "20090702",
+      "modalities": [
+        "SM"
+      ],
+      "series": 3,
+      "instances": 18
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.3023.4024.215308722288168917637555384485",
+      "patient": "TCGA-QQ-A8VH",
+      "pid": "TCGA-QQ-A8VH",
+      "desc": "MRI THORACIC W/WO CONTRAST",
+      "date": "20020315",
+      "modalities": [
+        "MR"
+      ],
+      "series": 8,
+      "instances": 214
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.7695.4007.324475281161490036195179843543",
+      "patient": "TCGA-09-1667",
+      "pid": "TCGA-09-1667",
+      "desc": "CT ABD PELV EN",
+      "date": "19950403",
+      "modalities": [
+        "CT",
+        "SR"
+      ],
+      "series": 2,
+      "instances": 77
+    },
+    {
+      "uid": "1.2.826.0.1.3680043.2.1125.1.11608962641993666019702920539307840",
+      "patient": "Anonymous",
+      "pid": "AVSUHP",
+      "desc": "Untitled Study",
+      "date": "20230403",
+      "modalities": [
+        "CT"
+      ],
+      "series": 1,
+      "instances": 112
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.256467663913010332776401703474716742458",
+      "patient": "StageII-Colorectal-CT-005",
+      "pid": "StageII-Colorectal-CT-005",
+      "desc": "Chest CT Routine",
+      "date": "20040106",
+      "modalities": [
+        "CT",
+        "SEG"
+      ],
+      "series": 2,
+      "instances": 53
+    },
+    {
+      "uid": "1.2.840.113619.2.290.3.3767434740.226.1600859119.501",
+      "patient": "Water Phantom",
+      "pid": "202009231",
+      "desc": "Uniformity",
+      "date": "20200923",
+      "modalities": [
+        "CT",
+        "PT",
+        "RTSTRUCT"
+      ],
+      "series": 5,
+      "instances": 218
+    },
+    {
+      "uid": "1.3.76.13.65829.2.20130125082826.1072139.2",
+      "patient": "Anonymous",
+      "pid": "642341",
+      "desc": "ECG",
+      "date": "20130125",
+      "modalities": [
+        "ECG"
+      ],
+      "series": 1,
+      "instances": 1
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.99.1071.21255249241959598781018667405790",
+      "patient": "COVID-19-NY-SBU",
+      "pid": "COVID-19-NY-SBU",
+      "desc": "MRI ABD WWO IV CONT",
+      "date": "19001128",
+      "modalities": [
+        "MR"
+      ],
+      "series": 15,
+      "instances": 1054
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.99.1071.19949805185931008572499729370934",
+      "patient": "COVID-19-NY-SBU",
+      "pid": "COVID-19-NY-SBU",
+      "desc": "CT ABD PELVIS(WITH CHEST IMAGES) W IV CON",
+      "date": "19001209",
+      "modalities": [
+        "CT"
+      ],
+      "series": 4,
+      "instances": 477
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.99.1071.26968527900428638961173806140069",
+      "patient": "COVID-19-NY-SBU",
+      "pid": "COVID-19-NY-SBU",
+      "desc": "CT CHEST WITH IV CONT",
+      "date": "19001130",
+      "modalities": [
+        "CT"
+      ],
+      "series": 6,
+      "instances": 642
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.99.1071.30380506825315291544089774688247",
+      "patient": "COVID-19-NY-SBU",
+      "pid": "COVID-19-NY-SBU",
+      "desc": "CT ABD AND PELVIS WITH IV CONT",
+      "date": "19001127",
+      "modalities": [
+        "CT"
+      ],
+      "series": 4,
+      "instances": 364
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.99.1071.55651399101931177647030363790032",
+      "patient": "COVID-19-NY-SBU",
+      "pid": "COVID-19-NY-SBU",
+      "desc": "CHEST AP VIEWONLY",
+      "date": "19001231",
+      "modalities": [
+        "CR"
+      ],
+      "series": 2,
+      "instances": 2
+    },
+    {
+      "uid": "2.25.317377619501274872606137091638706705333",
+      "patient": "Unknown",
+      "pid": "",
+      "desc": "Untitled Study",
+      "date": "",
+      "modalities": [
+        "DOC"
+      ],
+      "series": 1,
+      "instances": 1
+    },
+    {
+      "uid": "2.25.96975534054447904995905761963464388233",
+      "patient": "Horse",
+      "pid": "123",
+      "desc": "Untitled Study",
+      "date": "20200723",
+      "modalities": [
+        "OT"
+      ],
+      "series": 1,
+      "instances": 5
+    },
+    {
+      "uid": "1.2.840.113663.1500.1.248223208.1.1.20110323.105903.687",
+      "patient": "Cardiac US",
+      "pid": "Cardiac US",
+      "desc": "Untitled Study",
+      "date": "",
+      "modalities": [
+        "US"
+      ],
+      "series": 1,
+      "instances": 9
+    },
+    {
+      "uid": "1.3.12.2.1107.5.2.32.35162.30000015050317233592200000046",
+      "patient": "FreeSurfer SEG",
+      "pid": "92afb4624d113e39451e07fbfb0a0892",
+      "desc": "8e8950befb4a114c729ff30efd9297f3",
+      "date": "19991231",
+      "modalities": [
+        "MR",
+        "SEG"
+      ],
+      "series": 2,
+      "instances": 129
+    },
+    {
+      "uid": "1.3.6.1.4.1.32722.99.99.62087908186665265759322018723889952421",
+      "patient": "LUNG1-008",
+      "pid": "LUNG1-008",
+      "desc": "Untitled Study",
+      "date": "20140101",
+      "modalities": [
+        "CT",
+        "RTSTRUCT"
+      ],
+      "series": 2,
+      "instances": 115
+    },
+    {
+      "uid": "1.2.276.0.7230010.3.1.2.2723277605.10168.1676054414.178",
+      "patient": "multiframe MR",
+      "pid": "multiframe MR",
+      "desc": "RNM CRANIO (ENCEFALO)",
+      "date": "",
+      "modalities": [
+        "MR"
+      ],
+      "series": 4,
+      "instances": 4
+    },
+    {
+      "uid": "1.3.6.1.4.1.25403.345050719074.3824.20170125095438.5",
+      "patient": "Neptune",
+      "pid": "0000002",
+      "desc": "DFCI CT CHEST W CONTRAST 6023",
+      "date": "20140522",
+      "modalities": [
+        "CT"
+      ],
+      "series": 5,
+      "instances": 381
+    },
+    {
+      "uid": "1.3.6.1.4.1.25403.345050719074.3824.20170125095258.1",
+      "patient": "Neptune",
+      "pid": "0000002",
+      "desc": "DFCI CT CHEST W CONTRAST 6023",
+      "date": "20140325",
+      "modalities": [
+        "CT"
+      ],
+      "series": 5,
+      "instances": 249
+    },
+    {
+      "uid": "1.3.46.670589.30.1.3.1.1625260923.1632320482484.1",
+      "patient": "Test^R\u00f6ntgen",
+      "pid": "20210922-01-0001",
+      "desc": "Thorax (kl.)",
+      "date": "20210922",
+      "modalities": [
+        "DX"
+      ],
+      "series": 1,
+      "instances": 1
+    },
+    {
+      "uid": "1.3.6.1.4.1.5962.99.1.1117.5035.1620319789811.1.2.1",
+      "patient": "SIIM^Andy",
+      "pid": "TCGA-50-5072",
+      "desc": "CT CHEST N/C",
+      "date": "20000306",
+      "modalities": [
+        "CT",
+        "SM",
+        "PT",
+        "NM",
+        "XC"
+      ],
+      "series": 27,
+      "instances": 3273
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.5099.8010.217836670708542506360829799868",
+      "patient": "SIIM^Jean",
+      "pid": "Radiotherapy-001",
+      "desc": "Untitled Study",
+      "date": "20190825",
+      "modalities": [
+        "SM",
+        "CT",
+        "RTDOSE",
+        "RTPLAN",
+        "RTSTRUCT",
+        "PT"
+      ],
+      "series": 17,
+      "instances": 3243
+    },
+    {
+      "uid": "2.25.269859997690759739055099378767846712697",
+      "patient": "SIIM^Jessica",
+      "pid": "opth-001",
+      "desc": "Untitled Study",
+      "date": "20210527",
+      "modalities": [
+        "OP",
+        "SM"
+      ],
+      "series": 2,
+      "instances": 17
+    },
+    {
+      "uid": "1.3.6.1.4.1.5962.99.1.1126.3483.1620329455972.1.2.1",
+      "patient": "SIIM^Neela",
+      "pid": "TCGA-BA-4077",
+      "desc": "Untitled Study",
+      "date": "19960317",
+      "modalities": [
+        "OP",
+        "OPT",
+        "SM",
+        "CT",
+        "CTPT",
+        "PT",
+        "XC"
+      ],
+      "series": 28,
+      "instances": 1237
+    },
+    {
+      "uid": "1.3.6.1.4.1.5962.99.1.1123.9231.1620326176300.1.2.1",
+      "patient": "SIIM^Ravi",
+      "pid": "LIDC-IDRI-0132",
+      "desc": "Untitled Study",
+      "date": "20000101",
+      "modalities": [
+        "CT",
+        "OAM",
+        "SM",
+        "CR",
+        "XC"
+      ],
+      "series": 12,
+      "instances": 261
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.4792.2001.232252967813565730694525674696",
+      "patient": "SIIM^Sally",
+      "pid": "BreastDx-01-0003",
+      "desc": "Digital Diagnostic Mammogram Bilateral",
+      "date": "20080422",
+      "modalities": [
+        "MG",
+        "MR",
+        "OP",
+        "OPT",
+        "SM",
+        "ANN",
+        "XC"
+      ],
+      "series": 31,
+      "instances": 888
+    },
+    {
+      "uid": "1.2.276.0.7230010.3.1.2.296485376.1.1665793212.499772",
+      "patient": "SIIM^Thierry",
+      "pid": "Thierry_cbct_teeth_001",
+      "desc": "3D examination",
+      "date": "20221015",
+      "modalities": [
+        "CT",
+        "OT",
+        "SM"
+      ],
+      "series": 5,
+      "instances": 402
+    },
+    {
+      "uid": "1.2.826.0.1.3680043.8.498.21429579114586728888067401120368300850",
+      "patient": "test-render",
+      "pid": "ACRIN-NSCLC-FDG-PET-042",
+      "desc": "LUNG DELAYS",
+      "date": "19600116",
+      "modalities": [
+        "MR"
+      ],
+      "series": 1,
+      "instances": 10
+    },
+    {
+      "uid": "2.16.124.113543.6004.101.103.20021117.162333.1",
+      "patient": "AAPM^Test^Patterns",
+      "pid": "TG18-2002",
+      "desc": "Luminance 1K",
+      "date": "20021117",
+      "modalities": [
+        "OT"
+      ],
+      "series": 6,
+      "instances": 25
+    },
+    {
+      "uid": "2.16.124.113543.6004.101.103.20021117.190619.1",
+      "patient": "AAPM^Test^Patterns",
+      "pid": "TG18-2002",
+      "desc": "Multi Purpose 1K",
+      "date": "20021117",
+      "modalities": [
+        "OT"
+      ],
+      "series": 3,
+      "instances": 3
+    },
+    {
+      "uid": "2.16.124.113543.6004.101.103.20021117.123455.1",
+      "patient": "AAPM^Test^Patterns",
+      "pid": "TG18-2002",
+      "desc": "Noise 1K",
+      "date": "20021117",
+      "modalities": [
+        "OT"
+      ],
+      "series": 2,
+      "instances": 4
+    },
+    {
+      "uid": "2.16.124.113543.6004.101.103.20021117.061159.1",
+      "patient": "AAPM^Test^Patterns",
+      "pid": "TG18-2002",
+      "desc": "Resolution 2K",
+      "date": "20021117",
+      "modalities": [
+        "OT"
+      ],
+      "series": 6,
+      "instances": 14
+    },
+    {
+      "uid": "1.2.840.113619.2.30.1.1762295590.1623.978668949.886",
+      "patient": "transferSyntaxes",
+      "pid": "2178309",
+      "desc": "CHEST",
+      "date": "20010105",
+      "modalities": [
+        "CT"
+      ],
+      "series": 7,
+      "instances": 7
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.1188.2803.137585363493444318569098508293",
+      "patient": "LiverUS-06",
+      "pid": "LiverUS-06",
+      "desc": "Untitled Study",
+      "date": "20121001",
+      "modalities": [
+        "US"
+      ],
+      "series": 1,
+      "instances": 20
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.6834.5010.992793141464713669479982159310",
+      "patient": "P109",
+      "pid": "109_HM10395",
+      "desc": "p4",
+      "date": "19991201",
+      "modalities": [
+        "CT"
+      ],
+      "series": 10,
+      "instances": 500
+    },
+    {
+      "uid": "1.2.276.0.7230010.3.1.2.2155604110.4180.1021041295.21",
+      "patient": "Structured Reports",
+      "pid": "PID_SR",
+      "desc": "Untitled Study",
+      "date": "20240101",
+      "modalities": [
+        "CT",
+        "MR",
+        "CR",
+        "US",
+        "DS",
+        "DR",
+        "SR"
+      ],
+      "series": 27,
+      "instances": 27
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.7695.4164.854371101395585518263730420801",
+      "patient": "ACRIN-6698-263143^Site-AAE^ISPY2",
+      "pid": "ACRIN-6698-263143",
+      "desc": "ACRIN-6698_ISPY2_MRI_T2",
+      "date": "20011129",
+      "modalities": [
+        "MR",
+        "SEG"
+      ],
+      "series": 16,
+      "instances": 3611
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.3098.5025.285242291560760827564488897577",
+      "patient": "PD-1-Lung-00033",
+      "pid": "PD-1-Lung-00033",
+      "desc": "OSI PET CT SKULL TO MID THIGH",
+      "date": "20080307",
+      "modalities": [
+        "CT",
+        "PT",
+        "SC",
+        "SEG"
+      ],
+      "series": 8,
+      "instances": 1033
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.4792.2001.921758700577562664959693695481",
+      "patient": "Unknown",
+      "pid": "BreastDx-01-0024",
+      "desc": "MRI Breast Bilateral with and without Contrast",
+      "date": "20080805",
+      "modalities": [
+        "MR",
+        "SR"
+      ],
+      "series": 5,
+      "instances": 2633
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.331759366792756327296606233801322964986",
+      "patient": "CCTH-A01",
+      "pid": "CCTH-A01",
+      "desc": "MR1",
+      "date": "20050306",
+      "modalities": [
+        "MR",
+        "REG",
+        "RTSTRUCT"
+      ],
+      "series": 12,
+      "instances": 1280
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.142405276970608411968986986185934975188",
+      "patient": "CCTH-B01",
+      "pid": "CCTH-B01",
+      "desc": "MR1",
+      "date": "20020721",
+      "modalities": [
+        "MR"
+      ],
+      "series": 8,
+      "instances": 1380
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.1.24766180081901755714059656629507905556",
+      "patient": "MSB-01723",
+      "pid": "MSB-01723",
+      "desc": "XR_Biopsy_BoneMarrow",
+      "date": "19600115",
+      "modalities": [
+        "XA"
+      ],
+      "series": 2,
+      "instances": 2
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.1.33069303347481630751448489673943931080",
+      "patient": "MSB-09027",
+      "pid": "MSB-09027",
+      "desc": "MRI Pelvis",
+      "date": "19590619",
+      "modalities": [
+        "MR"
+      ],
+      "series": 11,
+      "instances": 826
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.1.84416332615988066829602832830236187384",
+      "patient": "MSB-08178",
+      "pid": "MSB-08178",
+      "desc": "XR_RF AbdPelvis",
+      "date": "19561031",
+      "modalities": [
+        "DX",
+        "RF"
+      ],
+      "series": 3,
+      "instances": 15
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.7085.2626.494695569589117268722281491772",
+      "patient": "C3N-02972",
+      "pid": "C3N-02972",
+      "desc": "US PELVIS W TRANSVAGINAL",
+      "date": "20101014",
+      "modalities": [
+        "US"
+      ],
+      "series": 1,
+      "instances": 59
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.297577087050970310787702792940607009472",
+      "patient": "CT-PET-VI-01",
+      "pid": "CT-PET-VI-01",
+      "desc": "RT^RT_RespLowBreathRateRNS (Adult)",
+      "date": "19960430",
+      "modalities": [
+        "CT",
+        "PT",
+        "RWV"
+      ],
+      "series": 6,
+      "instances": 1659
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.1620.1225.189514895974227080410265976065",
+      "patient": "EA1141-7189655",
+      "pid": "EA1141-7189655",
+      "desc": "MRI BREAST BILAT WO/W CONTRAST",
+      "date": "19450129",
+      "modalities": [
+        "MR"
+      ],
+      "series": 24,
+      "instances": 4930
+    },
+    {
+      "uid": "1.3.6.1.4.1.32722.99.99.239341353911714368772597187099978969331",
+      "patient": "LUNG1-001",
+      "pid": "LUNG1-001",
+      "desc": "Untitled Study",
+      "date": "20080918",
+      "modalities": [
+        "CT",
+        "RTSTRUCT",
+        "SEG",
+        "SR"
+      ],
+      "series": 11,
+      "instances": 144
+    },
+    {
+      "uid": "1.3.12.2.1107.5.1.4.60175.30000008042114404745300000010",
+      "patient": "Thoracic Phantom",
+      "pid": "NoduleLayout_3",
+      "desc": "Scanner-SIEMENS_Exp-100_Pitch-0.9_SlCol-64x0.6mm",
+      "date": "20080421",
+      "modalities": [
+        "CT"
+      ],
+      "series": 120,
+      "instances": 40140
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.9823.1001.134394060407147891170882809392",
+      "patient": "Unknown",
+      "pid": "MIP-PROSTATE-01-0017",
+      "desc": "MRI Prostate ERC",
+      "date": "20070216",
+      "modalities": [
+        "MR"
+      ],
+      "series": 7,
+      "instances": 732
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.2103.7010.135953723682765205394176991681",
+      "patient": "QIN-Breast-DCE-MRI-BC10",
+      "pid": "QIN-Breast-DCE-MRI-BC10",
+      "desc": "Untitled Study",
+      "date": "19970828",
+      "modalities": [
+        "KO",
+        "MR"
+      ],
+      "series": 34,
+      "instances": 3842
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.2103.7010.634114621738943599785009586807",
+      "patient": "QIN-Breast-DCE-MRI-BC10",
+      "pid": "QIN-Breast-DCE-MRI-BC10",
+      "desc": "Untitled Study",
+      "date": "19970727",
+      "modalities": [
+        "KO",
+        "MR"
+      ],
+      "series": 34,
+      "instances": 3842
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.207544490797667703011829289839681390478",
+      "patient": "ReMIND-001",
+      "pid": "ReMIND-001",
+      "desc": "Intraop",
+      "date": "19821225",
+      "modalities": [
+        "MR",
+        "US"
+      ],
+      "series": 6,
+      "instances": 323
+    },
+    {
+      "uid": "1.3.6.1.4.1.9328.50.17.15423521354819720574322014551955370036",
+      "patient": "285011",
+      "pid": "RIDER-1343746903",
+      "desc": "PET CT MID BODY",
+      "date": "20060527",
+      "modalities": [
+        "CT",
+        "PT",
+        "SEG"
+      ],
+      "series": 13,
+      "instances": 5728
+    },
+    {
+      "uid": "1.3.6.1.4.1.9328.50.1.53671",
+      "patient": "1.3.6.1.4.1.9328.50.1.0109",
+      "pid": "1.3.6.1.4.1.9328.50.1.0109",
+      "desc": "CT CHEST W/ CONT",
+      "date": "20000329",
+      "modalities": [
+        "CT",
+        "PR",
+        "SEG",
+        "SR"
+      ],
+      "series": 17,
+      "instances": 328
+    },
+    {
+      "uid": "1.3.6.1.4.1.9328.50.1.54652",
+      "patient": "1.3.6.1.4.1.9328.50.1.0109",
+      "pid": "1.3.6.1.4.1.9328.50.1.0109",
+      "desc": "CT CHEST W/ CONT",
+      "date": "20000310",
+      "modalities": [
+        "CT",
+        "PR",
+        "SEG",
+        "SR"
+      ],
+      "series": 18,
+      "instances": 329
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.191696062987463500085282581898315738844",
+      "patient": "UPENN-GBM-00595",
+      "pid": "UPENN-GBM-00595",
+      "desc": "MR HEAD W AND WO IV CONTRAST TUMOR NEW",
+      "date": "20131019",
+      "modalities": [
+        "MR"
+      ],
+      "series": 2,
+      "instances": 4620
+    },
+    {
+      "uid": "2.25.232704420736447710317909004159492840763",
+      "patient": "M1",
+      "pid": "M1",
+      "desc": "General Static Scan + CT",
+      "date": "20220915",
+      "modalities": [
+        "CT",
+        "PT"
+      ],
+      "series": 2,
+      "instances": 10163
+    },
+    {
+      "uid": "1.3.6.1.4.1.14519.5.2.1.7310.5101.860473186348887719777907797922",
+      "patient": "ProstateX-0207",
+      "pid": "ProstateX-0207",
+      "desc": "MR prostaat kanker detectie_mc MCAPRODET",
+      "date": "20111210",
+      "modalities": [
+        "MR",
+        "SR"
+      ],
+      "series": 55,
+      "instances": 923
+    },
+    {
+      "uid": "1.2.840.113654.2.55.242841386983064378162007136685545369722",
+      "patient": "149872^LSS",
+      "pid": "101287",
+      "desc": "NLST-LSS",
+      "date": "19990102",
+      "modalities": [
+        "CT",
+        "SR"
+      ],
+      "series": 2,
+      "instances": 144
+    },
+    {
+      "uid": "1.3.6.1.4.1.12201.1091.126683095609223531686845324113579088978",
+      "patient": "FORTEST",
+      "pid": "FORTEST",
+      "desc": "2 FoR 2 CT 3 PT per",
+      "date": "20210428",
+      "modalities": [
+        "CT",
+        "PT",
+        "RTSTRUCT",
+        "SEG"
+      ],
+      "series": 8,
+      "instances": 440
+    },
+    {
+      "uid": "1.3.6.1.4.1.25403.345050719074.3824.20170125113417.1",
+      "patient": "Juno",
+      "pid": "0000003",
+      "desc": "PETCT",
+      "date": "20141212",
+      "modalities": [
+        "CT"
+      ],
+      "series": 3,
+      "instances": 176
+    },
+    {
+      "uid": "1.2.250.38.858.4674.19670314.20250206.1.20360931",
+      "patient": "Unknown",
+      "pid": "",
+      "desc": "Untitled Study",
+      "date": "",
+      "modalities": [
+        "BM"
+      ],
+      "series": 1,
+      "instances": 1
+    }
+  ]
+}
