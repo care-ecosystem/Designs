@@ -1,131 +1,885 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>pinelab payment flows - Care Designs</title>
-    <link rel="icon" type="image/png" href="../../favicon.png">
-    <link rel="stylesheet" href="../../assets/css/main.css">
-    <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pine Labs Payment — Connected Flows</title>
+<style>
+  :root{
+    --accent:#0d7d6f;
+    --accent-dark:#0a6459;
+    --accent-light:#e6f5f2;
+    --bg:#f5f6f8;
+    --card:#ffffff;
+    --border:#e3e6ea;
+    --text:#1c222b;
+    --muted:#6b7280;
+    --muted-2:#8b93a1;
+    --success-bg:#e9f9ef;
+    --success-text:#1a8a4a;
+    --error-bg:#fdecec;
+    --error-text:#c9342f;
+    --info-bg:#eef6ff;
+    --info-text:#2563a8;
+    --radius:10px;
+    --shadow: 0 8px 24px rgba(20,25,35,0.08);
+    font-family: -apple-system, "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-size:14px;
+    line-height:1.45;
+  }
+  .app{
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px 24px 80px;
+  }
+  .masthead{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .masthead h1{
+    font-size:20px;
+    margin:0;
+    font-weight:650;
+    letter-spacing:-0.01em;
+  }
+  .masthead p{
+    margin:4px 0 0;
+    color:var(--muted);
+    font-size:13px;
+  }
+  .tabs{
+    display:flex;
+    gap:6px;
+    background:#eceef1;
+    padding:4px;
+    border-radius:10px;
+    width:fit-content;
+  }
+  .tab-btn{
+    border:none;
+    background:transparent;
+    padding:9px 16px;
+    border-radius:8px;
+    font-size:13.5px;
+    font-weight:560;
+    color:var(--muted);
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .tab-btn.active{
+    background:var(--card);
+    color:var(--text);
+    box-shadow:0 1px 3px rgba(0,0,0,0.08);
+  }
+  .flow{ display:none; }
+  .flow.active{ display:block; }
+
+  /* ---------- shared card look ---------- */
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+  }
+  .badge{
+    display:inline-block;
+    padding:3px 10px;
+    border-radius:100px;
+    font-size:11.5px;
+    font-weight:600;
+  }
+  .badge.blue{background:var(--info-bg);color:var(--info-text);}
+  .badge.green{background:var(--success-bg);color:var(--success-text);}
+  .badge.red{background:var(--error-bg);color:var(--error-text);}
+  .badge.grey{background:#eef0f3;color:var(--muted);}
+
+  button.primary{
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    padding:10px 16px;
+    border-radius:8px;
+    font-size:13.5px;
+    font-weight:600;
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  button.primary:hover{background:var(--accent-dark);}
+  button.primary:disabled{background:#a9c9c3;cursor:not-allowed;}
+  button.ghost{
+    background:#fff;
+    color:var(--text);
+    border:1px solid var(--border);
+    padding:10px 16px;
+    border-radius:8px;
+    font-size:13.5px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  button.ghost:hover{background:#f7f8fa;}
+  button.danger{
+    background:var(--error-text);
+    color:#fff;
+    border:none;
+    padding:10px 16px;
+    border-radius:8px;
+    font-size:13.5px;
+    font-weight:600;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+  }
+  button.danger:hover{background:#b32a26;}
+  button.linklike{
+    background:none;border:none;color:var(--accent);font-weight:600;font-size:13px;cursor:pointer;padding:0;
+  }
+
+  /* ================= FLOW 1: invoice ================= */
+  .invoice-shell{
+    display:flex;
+    gap:0;
+    position:relative;
+  }
+  .invoice-main{
+    flex:1;
+    min-width:0;
+    padding-right:0;
+    transition:filter .2s ease;
+  }
+  .invoice-topline{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:14px;
+    padding:16px 20px;
+    border-bottom:1px solid var(--border);
+  }
+  .invoice-topline .fields{
+    display:flex;
+    gap:34px;
+    flex-wrap:wrap;
+  }
+  .invoice-topline .fields div span.label{
+    display:block;font-size:11.5px;color:var(--muted-2);margin-bottom:2px;
+  }
+  .invoice-topline .fields div span.value{
+    font-weight:600;
+  }
+  .invoice-topline .actions{ display:flex; gap:10px; }
+
+  .invoice-summary-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 20px;
+    border-bottom:1px solid var(--border);
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .invoice-summary-bar .totals{ display:flex; gap:36px; }
+  .invoice-summary-bar .totals div span.label{ display:block;font-size:11.5px;color:var(--muted-2);}
+  .invoice-summary-bar .totals div span.value{ font-weight:650; }
+
+  .invoice-body{ padding:22px 24px 26px; }
+  .tax-invoice-title{ font-size:14px; font-weight:700; letter-spacing:0.02em; margin-bottom:2px;}
+  .tax-invoice-sub{ color:var(--muted); font-size:12.5px; margin-bottom:18px;}
+  .bill-row{ display:flex; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:14px;}
+  .bill-row .label{ font-size:11.5px; color:var(--muted-2); margin-bottom:4px;}
+  .bill-row .name{ font-weight:650; }
+  .bill-row .meta{ color:var(--muted); font-size:12.5px; line-height:1.6;}
+
+  table.items{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.items th{
+    text-align:left; font-weight:600; color:var(--muted); font-size:11.5px; text-transform:none;
+    border-bottom:1px solid var(--border); padding:8px 8px;
+  }
+  table.items td{ padding:10px 8px; border-bottom:1px solid #f1f2f4; }
+  table.items tfoot td{ border-bottom:none; padding:6px 8px; }
+  .right{ text-align:right; }
+
+  .payments-received{ margin-top:20px; }
+  .payments-received h4{ font-size:13px; margin:0 0 10px; }
+  .payments-received table{ width:100%; border-collapse:collapse; font-size:13px; }
+  .payments-received th{ text-align:left; font-weight:600; color:var(--muted); font-size:11.5px; border-bottom:1px solid var(--border); padding:8px;}
+  .payments-received td{ padding:10px 8px; border-bottom:1px solid #f1f2f4; }
+
+  /* backdrop + drawer */
+  .backdrop{
+    position:fixed; inset:0; background:rgba(15,18,25,0.35);
+    opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:40;
+  }
+  .backdrop.show{ opacity:1; pointer-events:auto; }
+
+  .drawer{
+    position:fixed;
+    top:0; right:0; bottom:0;
+    width:420px;
+    max-width:92vw;
+    background:#fff;
+    box-shadow:var(--shadow);
+    transform:translateX(100%);
+    transition:transform .28s cubic-bezier(.4,0,.2,1);
+    z-index:50;
+    overflow-y:auto;
+    padding:24px 24px 28px;
+  }
+  .drawer.open{ transform:translateX(0); }
+  .drawer-close{
+    position:absolute; top:18px; right:18px; border:none; background:none; cursor:pointer;
+    font-size:18px; color:var(--muted); line-height:1;
+  }
+  .drawer h2{ font-size:16px; margin:0 0 4px; padding-right:26px; }
+  .drawer .sub{ color:var(--muted); font-size:12.5px; margin-bottom:16px; }
+  .switch-link{ font-size:12.5px; color:var(--accent); font-weight:600; margin-bottom:16px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; }
+
+  .amount-box{
+    background:#fbfbfc; border:1px dashed var(--border); border-radius:10px;
+    padding:16px; text-align:center; margin-bottom:16px;
+  }
+  .amount-box .invoice-total{ font-size:12.5px; color:var(--muted); margin-bottom:10px; }
+  .amount-box .due-label{ font-size:11.5px; color:var(--muted-2); }
+  .amount-box .due-amount{ font-size:26px; font-weight:700; margin-top:2px; }
+
+  .info-note{
+    background:var(--info-bg); color:var(--info-text); border-radius:8px;
+    padding:11px 13px; font-size:12.5px; margin-bottom:18px; display:flex; gap:8px; align-items:flex-start;
+  }
+
+  .field-label{ font-size:12.5px; font-weight:600; margin:0 0 8px; }
+  .method-row{ display:flex; gap:10px; margin-bottom:18px; }
+  .method-tile{
+    flex:1; border:1.5px solid var(--border); border-radius:9px; padding:12px 8px;
+    display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer;
+    font-size:12px; font-weight:600; color:var(--muted); transition:all .12s ease; text-align:center;
+  }
+  .method-tile .icon{ font-size:18px; }
+  .method-tile.selected{ border-color:var(--accent); background:var(--accent-light); color:var(--accent-dark); }
+
+  select.field, .field-select{
+    width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px;
+    font-size:13.5px; margin-bottom:18px; background:#fff; color:var(--text);
+  }
+
+  .drawer-actions{ display:flex; gap:10px; margin-top:6px; }
+  .drawer-actions button{ flex:1; }
+
+  .processing-box{
+    text-align:center; padding:30px 10px 22px; border:1px solid var(--border); border-radius:10px; margin-bottom:20px;
+  }
+  .spinner{
+    width:34px; height:34px; border-radius:50%;
+    border:3px solid #dbeee9; border-top-color:var(--accent);
+    animation:spin 0.9s linear infinite; margin:0 auto 14px;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .processing-box .title{ color:var(--accent); font-weight:650; font-size:14px; margin-bottom:6px;}
+  .processing-box .sub{ color:var(--muted); font-size:12.5px; }
+
+  .kv-list{ margin-bottom:18px; }
+  .kv-row{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid #f1f2f4; font-size:13px; }
+  .kv-row span.k{ color:var(--muted); }
+  .kv-row span.v{ font-weight:600; }
+
+  .success-box{
+    text-align:center; background:var(--success-bg); border-radius:10px; padding:26px 16px; margin-bottom:20px;
+  }
+  .success-box .check{
+    width:40px; height:40px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center;
+    margin:0 auto 12px; color:var(--success-text); font-size:20px; font-weight:700;
+  }
+  .success-box .title{ font-weight:650; color:var(--success-text); font-size:14.5px; margin-bottom:10px;}
+  .success-box .rrn-label{ font-size:11.5px; color:var(--muted); }
+  .success-box .rrn{ font-size:20px; font-weight:700; letter-spacing:0.02em; }
+
+  .accordion{ border:1px solid var(--border); border-radius:8px; margin-bottom:12px; overflow:hidden; }
+  .accordion-head{
+    display:flex; justify-content:space-between; align-items:center; padding:11px 13px; cursor:pointer;
+    font-size:13px; font-weight:600; background:#fafbfc;
+  }
+  .accordion-head .chev{ transition:transform .15s ease; color:var(--muted); }
+  .accordion.open .accordion-head .chev{ transform:rotate(180deg); }
+  .accordion-body{ display:none; padding:2px 13px 10px; }
+  .accordion.open .accordion-body{ display:block; }
+  .mini-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  .mini-table th{ text-align:left; color:var(--muted-2); font-weight:600; padding:6px 4px; border-bottom:1px solid #f1f2f4; }
+  .mini-table td{ padding:7px 4px; border-bottom:1px solid #f6f7f8; }
+
+  /* toast */
+  .toast{
+    position:fixed; top:22px; right:24px; z-index:80;
+    background:#fff; border:1px solid var(--border); box-shadow:var(--shadow);
+    border-radius:9px; padding:11px 16px; font-size:13px; font-weight:560;
+    display:flex; align-items:center; gap:8px; opacity:0; transform:translateY(-8px);
+    transition:all .2s ease; pointer-events:none;
+  }
+  .toast.show{ opacity:1; transform:translateY(0); }
+  .toast.info-tone{ color:var(--info-text); }
+  .toast.success-tone{ color:var(--success-text); }
+
+  /* ================= FLOW 2: transaction list ================= */
+  .list-card{ padding:20px 22px 8px; }
+  .list-head{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:16px; flex-wrap:wrap; gap:10px;}
+  .list-head h2{ font-size:17px; margin:0; display:flex; align-items:center; gap:8px; }
+  .count-chip{ background:#eef0f3; border-radius:6px; padding:1px 9px; font-size:12.5px; color:var(--muted); font-weight:600; }
+  .list-head p{ margin:4px 0 0; color:var(--muted); font-size:12.5px; }
+
+  .filter-bar{ display:flex; gap:10px; margin-bottom:16px; position:relative; flex-wrap:wrap; }
+  .filter-bar select{ padding:9px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px; background:#fff; }
+  .filter-btn{
+    display:flex; align-items:center; gap:6px; background:#fff; border:1px solid var(--border);
+    padding:9px 14px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; color:var(--text);
+  }
+  .filter-menu{
+    position:absolute; top:calc(100% + 6px); left:220px;
+    background:#fff; border:1px solid var(--border); border-radius:9px; box-shadow:var(--shadow);
+    width:180px; padding:6px; z-index:30; display:none;
+  }
+  .filter-menu.show{ display:block; }
+  .filter-menu .fm-item{
+    display:flex; justify-content:space-between; align-items:center; padding:9px 10px; border-radius:6px; font-size:13px; cursor:pointer;
+  }
+  .filter-menu .fm-item:hover{ background:#f7f8fa; }
+
+  table.tx-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.tx-table th{
+    text-align:left; font-weight:600; color:var(--muted); font-size:11.5px; padding:10px 10px;
+    border-bottom:1px solid var(--border); white-space:nowrap;
+  }
+  table.tx-table td{ padding:12px 10px; border-bottom:1px solid #f1f2f4; white-space:nowrap; }
+  table.tx-table tbody tr{ cursor:pointer; transition:background .1s ease; }
+  table.tx-table tbody tr:hover{ background:#fafbfc; }
+  .acct-link{ color:var(--accent); font-weight:600; text-decoration:none; }
+  .list-footer{ padding:14px 4px 18px; color:var(--muted); font-size:12.5px; }
+
+  /* transaction detail drawer specifics */
+  .detail-kv{ margin-bottom:4px; }
+  .detail-kv .lab{ font-size:11.5px; color:var(--muted-2); margin-bottom:2px; }
+  .detail-kv .val{ font-weight:650; font-size:14px; }
+  .detail-block{ margin-bottom:16px; }
+
+  @media (max-width: 720px){
+    .drawer{ width:100vw; }
+    .filter-menu{ left:0; }
+  }
+</style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <a href="../../index.html" class="back-button">← Back to Features</a>
-            <h1>pinelab payment flows</h1>
-            <p class="subtitle">This is a sample feature demonstrating the structure and layout</p>
+
+<div class="app">
+  <div class="masthead">
+    <div>
+      <h1>Pine Labs Payment Integration</h1>
+      <p>Two connected flows — recording a payment against an invoice, and reviewing Pine Labs transactions.</p>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-flow="flow1">Payment from Invoice</button>
+      <button class="tab-btn" data-flow="flow2">Pinelabs Transactions</button>
+    </div>
+  </div>
+
+  <!-- ========================= FLOW 1 ========================= -->
+  <div class="flow active" id="flow1">
+    <div class="invoice-main card">
+      <div class="invoice-topline">
+        <div class="fields">
+          <div><span class="label">Patient Name</span><span class="value">Adhiran</span></div>
+          <div><span class="label">Account</span><span class="value">Adhiran 2026-08-03</span></div>
+          <div><span class="label">Amount Due</span><span class="value" id="f1-amount-due">₹600.00</span></div>
+          <div><span class="label">Status</span><span class="badge blue" id="f1-status">Active</span></div>
         </div>
-    </header>
-
-    <main class="container">
-        <section class="feature-info">
-            <div class="info-banner">
-                <strong>Template Feature</strong>
-                <p>This is a template you can copy to create new feature designs. Replace this content with your actual feature design and functionality.</p>
-            </div>
-        </section>
-
-        <section class="demo-section">
-            <h2>Feature Overview</h2>
-            <p>Describe what this feature does and its key benefits. Include context about the problem it solves.</p>
-
-            <div class="demo-container">
-                <h3>Interactive Demo</h3>
-                <div class="example-component">
-                    <p>This is where your feature UI would go. You can add:</p>
-                    <ul>
-                        <li>Form inputs and controls</li>
-                        <li>Interactive elements</li>
-                        <li>Data visualizations</li>
-                        <li>Custom components</li>
-                    </ul>
-
-                    <div class="example-buttons">
-                        <button class="btn btn-primary" onclick="alert('This is an example interaction!')">Primary Action</button>
-                        <button class="btn btn-secondary" onclick="alert('This is a secondary action!')">Secondary Action</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="specifications">
-            <h2>Design Specifications</h2>
-            <div class="spec-grid">
-                <div class="spec-card">
-                    <h3>Colors</h3>
-                    <div class="color-palette">
-                        <div class="color-sample" style="background: var(--primary-color);">
-                            <span>Primary</span>
-                        </div>
-                        <div class="color-sample" style="background: var(--secondary-color);">
-                            <span>Secondary</span>
-                        </div>
-                        <div class="color-sample" style="background: var(--success);">
-                            <span>Success</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="spec-card">
-                    <h3>Typography</h3>
-                    <p style="font-size: 1.5rem; font-weight: 600;">Heading Style</p>
-                    <p style="font-size: 1rem;">Body text style example</p>
-                    <p style="font-size: 0.875rem; color: var(--text-secondary);">Caption or helper text</p>
-                </div>
-
-                <div class="spec-card">
-                    <h3>Spacing</h3>
-                    <p>Use consistent spacing:</p>
-                    <ul>
-                        <li>8px base unit</li>
-                        <li>16px standard padding</li>
-                        <li>24px section spacing</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <section class="implementation-notes">
-            <h2>Implementation Notes</h2>
-            <div class="notes-content">
-                <h3>For Developers</h3>
-                <ul>
-                    <li><strong>Dependencies:</strong> List any required libraries or frameworks</li>
-                    <li><strong>API Requirements:</strong> Specify any backend API endpoints needed</li>
-                    <li><strong>State Management:</strong> Describe state requirements</li>
-                    <li><strong>Accessibility:</strong> Note ARIA labels, keyboard navigation requirements</li>
-                    <li><strong>Performance:</strong> Highlight any performance considerations</li>
-                </ul>
-
-                <h3>Edge Cases</h3>
-                <ul>
-                    <li>Empty states</li>
-                    <li>Error states</li>
-                    <li>Loading states</li>
-                    <li>Validation requirements</li>
-                </ul>
-            </div>
-        </section>
-
-        <section class="feedback-section">
-            <h2>Feedback & Questions</h2>
-            <p>Have feedback on this design? Please share your thoughts via:</p>
-            <ul>
-                <li>GitHub Issues</li>
-                <li>Team Slack channel</li>
-                <li>Design review meetings</li>
-            </ul>
-        </section>
-    </main>
-
-    <footer>
-        <div class="container">
-            <p>&copy; 2026 Care - Design Features Repository</p>
-            <p><a href="../../index.html">Back to Features</a></p>
+        <div class="actions">
+          <button class="ghost">Mark as balanced</button>
+          <button class="primary" id="open-record-payment">+ Record Payment</button>
         </div>
-    </footer>
+      </div>
 
-    <script src="../../assets/js/main.js"></script>
-    <script src="script.js"></script>
+      <div class="invoice-summary-bar">
+        <div>Invoice Summary <span class="badge blue" id="f1-summary-status">Issued</span></div>
+        <div class="totals">
+          <div><span class="label">Total Amount</span><span class="value">₹600.00</span></div>
+          <div><span class="label">Total Payments Received</span><span class="value" id="f1-total-received">₹0.00</span></div>
+          <div><span class="label">Balance Due</span><span class="value" id="f1-balance-due">₹600.00</span></div>
+        </div>
+      </div>
+
+      <div class="invoice-body">
+        <div class="tax-invoice-title">TAX INVOICE</div>
+        <div class="tax-invoice-sub">#INV-161-26</div>
+
+        <div class="bill-row">
+          <div>
+            <div class="label">Bill To</div>
+            <div class="name">Adhiran</div>
+            <div class="meta">Address: Chennai<br>Phone: +91 95000 12345<br>UHID: 260000013</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="label">Issue Date</div>
+            <div class="value">03 Aug, 2026 11:10 AM</div>
+          </div>
+        </div>
+
+        <table class="items">
+          <thead>
+            <tr><th>#</th><th>Item</th><th>Performer</th><th class="right">Unit Price (₹)</th><th class="right">Qty</th><th class="right">Discount</th><th class="right">Total (₹)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>CT Scan</td><td>jagan</td><td class="right">600.00</td><td class="right">1.00</td><td class="right">0.00</td><td class="right">600.00</td></tr>
+          </tbody>
+          <tfoot>
+            <tr><td colspan="6" class="right">Base Amount</td><td class="right">₹600.00</td></tr>
+            <tr><td colspan="6" class="right">Net Amount</td><td class="right">₹600.00</td></tr>
+            <tr><td colspan="6" class="right" style="font-weight:700;">Total</td><td class="right" style="font-weight:700;">₹600.00</td></tr>
+          </tfoot>
+        </table>
+
+        <div class="payments-received" id="payments-received-block" style="display:none;">
+          <h4>Payments Received Against This Invoice</h4>
+          <table>
+            <thead><tr><th>#</th><th>Date and Time</th><th>Payment Method</th><th>Reference</th></tr></thead>
+            <tbody id="payments-received-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================= FLOW 2 ========================= -->
+  <div class="flow" id="flow2">
+    <div class="list-card card">
+      <div class="list-head">
+        <div>
+          <h2>Pinelabs Transactions <span class="count-chip">51</span></h2>
+          <p>View and manage all Pinelabs payment transactions</p>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <select><option>Card</option><option>UPI</option><option>Bharat QR</option></select>
+        <select><option>All locations</option></select>
+        <button class="filter-btn" id="filter-toggle">▾ Filter</button>
+        <div class="filter-menu" id="filter-menu">
+          <div class="fm-item">Date <span>›</span></div>
+          <div class="fm-item">Status <span>›</span></div>
+          <div class="fm-item">Location <span>›</span></div>
+        </div>
+        <select style="margin-left:auto;"><option>Recently Updated First</option></select>
+      </div>
+
+      <table class="tx-table">
+        <thead>
+          <tr>
+            <th>Account</th><th>Payment Initiated</th><th>Invoice</th><th>Method</th>
+            <th>Amount</th><th>Reference No.</th><th>Last Updated</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tx-rows"></tbody>
+      </table>
+      <div class="list-footer">Showing 1 to 10 of 51 results</div>
+    </div>
+  </div>
+</div>
+
+<!-- backdrop shared -->
+<div class="backdrop" id="backdrop"></div>
+
+<!-- FLOW 1 drawer -->
+<div class="drawer" id="payment-drawer">
+  <button class="drawer-close" id="close-payment-drawer">✕</button>
+  <div id="payment-drawer-content"></div>
+</div>
+
+<!-- FLOW 2 drawer -->
+<div class="drawer" id="tx-drawer">
+  <button class="drawer-close" id="close-tx-drawer">✕</button>
+  <div id="tx-drawer-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- tab switching ---------------- */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.flow').forEach(f=>f.classList.remove('active'));
+    document.getElementById(btn.dataset.flow).classList.add('active');
+  });
+});
+
+/* ---------------- toast ---------------- */
+function showToast(msg, tone){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (tone || '');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(()=> t.classList.remove('show'), 2600);
+}
+
+/* ================= FLOW 1 logic ================= */
+const backdrop = document.getElementById('backdrop');
+const paymentDrawer = document.getElementById('payment-drawer');
+const paymentContent = document.getElementById('payment-drawer-content');
+
+let selectedMethod = 'qr';
+const methodLabels = { qr:'Bharat QR', card:'Card', upi:'UPI' };
+
+function renderSelectStep(){
+  paymentContent.innerHTML = `
+    <h2>Receive Payment via Pinelabs Terminal</h2>
+    <div class="sub">Recording payment for invoice #INV-161-26</div>
+    <div class="switch-link">↖ Switch to manual entry</div>
+
+    <div class="amount-box">
+      <div class="invoice-total">Invoice total: <strong>₹600.00</strong></div>
+      <div class="due-label">Amount Due</div>
+      <div class="due-amount">₹600.00</div>
+    </div>
+
+    <div class="info-note" id="info-note">
+      ℹ️ <span>₹600.00 will be collected via the Pinelabs POS terminal using ${methodLabels[selectedMethod]}. Confirm the terminal and location before sending the request.</span>
+    </div>
+
+    <div class="field-label">Payment Method</div>
+    <div class="method-row" id="method-row">
+      <div class="method-tile ${selectedMethod==='qr'?'selected':''}" data-m="qr"><div class="icon">▦</div>Bharat QR</div>
+      <div class="method-tile ${selectedMethod==='card'?'selected':''}" data-m="card"><div class="icon">💳</div>Card</div>
+      <div class="method-tile ${selectedMethod==='upi'?'selected':''}" data-m="upi"><div class="icon">📱</div>UPI</div>
+    </div>
+
+    <div class="field-label">Location</div>
+    <select class="field" id="location-select">
+      <option value="">Select location</option>
+      <option>General Medicine Ward</option>
+      <option>OPD Reception</option>
+      <option>Emergency Counter</option>
+    </select>
+
+    <div class="field-label">Select Terminal</div>
+    <select class="field" id="terminal-select">
+      <option value="">Select the POS Terminal</option>
+      <option>New Terminal (1013745)</option>
+      <option>Counter Terminal (1013512)</option>
+    </select>
+
+    <div class="drawer-actions">
+      <button class="ghost" id="cancel-payment">Cancel <span style="color:var(--muted-2);font-weight:400;">Esc</span></button>
+      <button class="primary" id="send-payment-request">Send Payment Request</button>
+    </div>
+  `;
+
+  paymentContent.querySelectorAll('.method-tile').forEach(tile=>{
+    tile.addEventListener('click', ()=>{
+      selectedMethod = tile.dataset.m;
+      renderSelectStep();
+    });
+  });
+  document.getElementById('cancel-payment').addEventListener('click', closePaymentDrawer);
+  document.getElementById('send-payment-request').addEventListener('click', ()=>{
+    const loc = document.getElementById('location-select').value;
+    const term = document.getElementById('terminal-select').value;
+    if(!loc || !term){
+      showToast('Select a location and terminal to continue', 'info-tone');
+      return;
+    }
+    renderProcessingStep();
+    setTimeout(renderSuccessStep, 2200);
+  });
+}
+
+function renderProcessingStep(){
+  showToast('Collect the payment on the POS terminal', 'success-tone');
+  paymentContent.innerHTML = `
+    <h2>Receive Payment via Pinelabs Terminal</h2>
+    <div class="sub">Recording payment for invoice #INV-161-26</div>
+
+    <div class="processing-box">
+      <div class="spinner"></div>
+      <div class="title">Transaction in progress…</div>
+      <div class="sub">Waiting for the customer to complete the payment on the POS terminal.</div>
+    </div>
+
+    <div class="kv-list">
+      <div class="kv-row"><span class="k">Payment Method:</span><span class="v">${methodLabels[selectedMethod]}</span></div>
+      <div class="kv-row"><span class="k">Amount:</span><span class="v">₹600.00</span></div>
+      <div class="kv-row"><span class="k">Transaction Number:</span><span class="v">A28-INV-161-26-001</span></div>
+      <div class="kv-row"><span class="k">Reference Number:</span><span class="v">858710</span></div>
+    </div>
+
+    <button class="ghost" style="width:100%;" id="cancel-transaction">Cancel Transaction</button>
+  `;
+  document.getElementById('cancel-transaction').addEventListener('click', ()=>{
+    renderSelectStep();
+  });
+}
+
+function renderSuccessStep(){
+  paymentContent.innerHTML = `
+    <h2>Receive Payment via Pinelabs Terminal</h2>
+    <div class="sub">Recording payment for invoice #INV-161-26</div>
+
+    <div class="success-box">
+      <div class="check">✓</div>
+      <div class="title">Payment Completed Successfully</div>
+      <div class="rrn-label">RRN</div>
+      <div class="rrn">000020</div>
+    </div>
+
+    <div class="kv-list">
+      <div class="kv-row"><span class="k">Status:</span><span class="badge green">Completed</span></div>
+      <div class="kv-row"><span class="k">Payment Method:</span><span class="v">${methodLabels[selectedMethod]}</span></div>
+      <div class="kv-row"><span class="k">Amount:</span><span class="v">₹600.00</span></div>
+      <div class="kv-row"><span class="k">Approval Code:</span><span class="v">00</span></div>
+      <div class="kv-row"><span class="k">Last Updated At:</span><span class="v">03/08/2026, 11:13:32</span></div>
+    </div>
+
+    <div class="accordion" id="acc-1">
+      <div class="accordion-head" onclick="toggleAccordion('acc-1')">Transaction Details <span class="chev">⌄</span></div>
+      <div class="accordion-body">
+        <table class="mini-table">
+          <thead><tr><th>Field</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Plutus Transaction Reference ID</td><td>858710</td></tr>
+            <tr><td>Upload Status</td><td>APPROVED</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="accordion" id="acc-2">
+      <div class="accordion-head" onclick="toggleAccordion('acc-2')">Status <span class="chev">⌄</span></div>
+      <div class="accordion-body">
+        <table class="mini-table">
+          <thead><tr><th>Field</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Retrieval Reference Number</td><td>000020</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <button class="primary" style="width:100%;margin-top:6px;" id="close-success">Close</button>
+  `;
+  document.getElementById('close-success').addEventListener('click', ()=>{
+    closePaymentDrawer();
+    markInvoicePaid();
+  });
+}
+
+function toggleAccordion(id){
+  document.getElementById(id).classList.toggle('open');
+}
+
+function openPaymentDrawer(){
+  renderSelectStep();
+  backdrop.classList.add('show');
+  paymentDrawer.classList.add('open');
+}
+function closePaymentDrawer(){
+  backdrop.classList.remove('show');
+  paymentDrawer.classList.remove('open');
+}
+
+document.getElementById('open-record-payment').addEventListener('click', openPaymentDrawer);
+document.getElementById('close-payment-drawer').addEventListener('click', closePaymentDrawer);
+backdrop.addEventListener('click', ()=>{ closePaymentDrawer(); closeTxDrawer(); });
+
+function markInvoicePaid(){
+  document.getElementById('f1-amount-due').textContent = '₹0.00';
+  document.getElementById('f1-status').textContent = 'Balanced';
+  document.getElementById('f1-status').className = 'badge green';
+  document.getElementById('f1-summary-status').textContent = 'Balanced';
+  document.getElementById('f1-summary-status').className = 'badge green';
+  document.getElementById('f1-total-received').textContent = '₹600.00';
+  document.getElementById('f1-balance-due').textContent = '₹0.00';
+  document.getElementById('open-record-payment').disabled = true;
+  document.getElementById('open-record-payment').textContent = '+ Record Payment';
+
+  const block = document.getElementById('payments-received-block');
+  block.style.display = 'block';
+  document.getElementById('payments-received-rows').innerHTML = `
+    <tr><td>1</td><td>3 Aug 2026, 11:13 AM</td><td>${methodLabels[selectedMethod]}</td><td>000020</td></tr>
+  `;
+}
+
+/* ================= FLOW 2 logic ================= */
+const txData = [
+  { account:'Adhiran 2026-07-31', date:'Aug 3, 2026 11:37 AM', invoice:'NA', method:'Card', amount:'₹111.00', ref:'NA', updated:'Aug 3, 2026 11:38 AM', status:'Queued',
+    terminal:'New Terminal (1013745)',
+    txDetails:{ 'Plutus Transaction Reference ID':'858721', 'Upload Status':'APPROVED' },
+    statusDetails:{} },
+
+  { account:'Jagankumar E', date:'Aug 3, 2026 11:25 AM', invoice:'#INV-159-26', method:'Card', amount:'₹600.00', ref:'NA', updated:'Aug 3, 2026 11:30 AM', status:'Error',
+    terminal:'New Terminal (1013745)',
+    txDetails:{ 'Payment Mode':'1 (Card)', 'Care Transaction Number':'A28-INV-159-26-00', 'Plutus Transaction Reference ID':'858715', 'Upload Status':'REJECTED' },
+    statusDetails:{ 'Response Code':'1', 'Response Message':'INVALID PLUTUS TXN REF ID' } },
+
+  { account:'Adhiran 2026-08-03', date:'Aug 3, 2026 11:13 AM', invoice:'#INV-161-26', method:'Card', amount:'₹600.00', ref:'000020', updated:'Aug 3, 2026 11:13 AM', status:'Complete',
+    terminal:'New Terminal (1013745)',
+    txDetails:{ 'Payment Mode':'1 (Card)', 'Care Transaction Number':'A28-INV-161-26-00', 'Plutus Transaction Reference ID':'858710', 'Upload Status':'APPROVED' },
+    statusDetails:{ 'Response Code':'0', 'Response Message':'TXN APPROVED', 'Merchant ID':'—', 'Terminal ID':'10137451', 'Retrieval Reference Number':'000020', 'Payment Mode':'CARD', 'Batch Number':'5', 'Card Type':'VISA', 'Card Number':'************2' } },
+
+  { account:'Adhiran 2026-07-31', date:'Aug 3, 2026 11:07 AM', invoice:'NA', method:'Card', amount:'₹1,111.00', ref:'000020', updated:'Aug 3, 2026 11:08 AM', status:'Complete',
+    terminal:'New Terminal (1013745)',
+    txDetails:{ 'Payment Mode':'1 (Card)', 'Care Transaction Number':'A28-INV-160-26-00', 'Plutus Transaction Reference ID':'858703', 'Upload Status':'APPROVED' },
+    statusDetails:{ 'Response Code':'0', 'Response Message':'TXN APPROVED', 'Merchant ID':'—', 'Terminal ID':'10137451', 'Retrieval Reference Number':'000020', 'Payment Mode':'CARD', 'Batch Number':'5', 'Card Type':'VISA', 'Card Number':'************9' } },
+
+  { account:'Adhiran 2026-07-31', date:'Aug 3, 2026 10:53 AM', invoice:'#INV-160-26', method:'Card', amount:'₹600.00', ref:'NA', updated:'Aug 3, 2026 10:54 AM', status:'Error',
+    terminal:'New Terminal (1013745)',
+    txDetails:{ 'Payment Mode':'1 (Card)', 'Care Transaction Number':'A18-PAY260730-003', 'Plutus Transaction Reference ID':'857762', 'Upload Status':'APPROVED' },
+    statusDetails:{ 'Response Code':'1', 'Response Message':'INVALID PLUTUS TXN REF ID' } },
+
+  { account:'Adhiran 2026-07-31', date:'Jul 31, 2026 4:37 PM', invoice:'NA', method:'Card', amount:'₹121.00', ref:'NA', updated:'Jul 31, 2026 4:38 PM', status:'Error',
+    terminal:'Counter Terminal (1013512)',
+    txDetails:{ 'Payment Mode':'1 (Card)', 'Care Transaction Number':'A18-PAY260731-011', 'Plutus Transaction Reference ID':'857701', 'Upload Status':'REJECTED' },
+    statusDetails:{ 'Response Code':'1', 'Response Message':'INVALID PLUTUS TXN REF ID' } },
+
+  { account:'Adhiran 2026-07-31', date:'Jul 31, 2026 4:30 PM', invoice:'NA', method:'Card', amount:'₹111.00', ref:'000020', updated:'Jul 31, 2026 4:30 PM', status:'Complete',
+    terminal:'New Terminal (1013745)',
+    txDetails:{ 'Payment Mode':'1 (Card)', 'Care Transaction Number':'A28-INV-159-26-00', 'Plutus Transaction Reference ID':'857698', 'Upload Status':'APPROVED' },
+    statusDetails:{ 'Response Code':'0', 'Response Message':'TXN APPROVED', 'Merchant ID':'—', 'Terminal ID':'10137451', 'Retrieval Reference Number':'000020', 'Payment Mode':'CARD', 'Batch Number':'5', 'Card Type':'RUPAY', 'Card Number':'************4' } },
+
+  { account:'Jagankumar E', date:'Jul 31, 2026 1:10 PM', invoice:'NA', method:'Card', amount:'₹111.00', ref:'000020', updated:'Jul 31, 2026 1:11 PM', status:'Complete',
+    terminal:'New Terminal (1013745)',
+    txDetails:{ 'Payment Mode':'1 (Card)', 'Care Transaction Number':'A28-INV-155-26-00', 'Plutus Transaction Reference ID':'857402', 'Upload Status':'APPROVED' },
+    statusDetails:{ 'Response Code':'0', 'Response Message':'TXN APPROVED', 'Merchant ID':'—', 'Terminal ID':'10137451', 'Retrieval Reference Number':'000020', 'Payment Mode':'CARD', 'Batch Number':'4', 'Card Type':'VISA', 'Card Number':'************7' } },
+
+  { account:'Adhiran 2026-07-31', date:'Jul 31, 2026 1:01 PM', invoice:'#INV-158-26', method:'Card', amount:'₹360.00', ref:'000020', updated:'Jul 31, 2026 1:03 PM', status:'Complete',
+    terminal:'New Terminal (1013745)',
+    txDetails:{ 'Payment Mode':'1 (Card)', 'Care Transaction Number':'A28-INV-158-26-00', 'Plutus Transaction Reference ID':'857390', 'Upload Status':'APPROVED' },
+    statusDetails:{ 'Response Code':'0', 'Response Message':'TXN APPROVED', 'Merchant ID':'—', 'Terminal ID':'10137451', 'Retrieval Reference Number':'000020', 'Payment Mode':'CARD', 'Batch Number':'4', 'Card Type':'VISA', 'Card Number':'************1' } },
+
+  { account:'James 2026-07-17', date:'Jul 30, 2026 1:52 PM', invoice:'#INV-153-26', method:'Card', amount:'₹1,000.00', ref:'000020', updated:'Jul 30, 2026 1:52 PM', status:'Complete',
+    terminal:'Counter Terminal (1013512)',
+    txDetails:{ 'Payment Mode':'1 (Card)', 'Care Transaction Number':'A28-INV-153-26-00', 'Plutus Transaction Reference ID':'857102', 'Upload Status':'APPROVED' },
+    statusDetails:{ 'Response Code':'0', 'Response Message':'TXN APPROVED', 'Merchant ID':'—', 'Terminal ID':'10135121', 'Retrieval Reference Number':'000020', 'Payment Mode':'CARD', 'Batch Number':'3', 'Card Type':'MASTERCARD', 'Card Number':'************6' } },
+];
+
+function statusBadge(s){
+  if(s==='Complete') return '<span class="badge green">Complete</span>';
+  if(s==='Queued') return '<span class="badge grey">Queued</span>';
+  return '<span class="badge red">Error</span>';
+}
+
+function renderTxRows(){
+  const rows = txData.map((t,i)=>`
+    <tr data-i="${i}">
+      <td><a class="acct-link" onclick="event.stopPropagation()">${t.account} ↗</a></td>
+      <td>${t.date}</td>
+      <td>${t.invoice==='NA' ? 'NA' : `<a class="acct-link" onclick="event.stopPropagation()">${t.invoice} ↗</a>`}</td>
+      <td>${t.method}</td>
+      <td>${t.amount}</td>
+      <td>${t.ref}</td>
+      <td>${t.updated}</td>
+      <td>${statusBadge(t.status)}</td>
+    </tr>
+  `).join('');
+  document.getElementById('tx-rows').innerHTML = rows;
+  document.querySelectorAll('#tx-rows tr').forEach(row=>{
+    row.addEventListener('click', ()=> openTxDrawer(parseInt(row.dataset.i)));
+  });
+}
+renderTxRows();
+
+const txDrawer = document.getElementById('tx-drawer');
+const txContent = document.getElementById('tx-drawer-content');
+
+function renderTxDrawer(t){
+  const isQueued = t.status === 'Queued';
+  const txRowsHtml = Object.entries(t.txDetails).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+  const statusRowsHtml = Object.entries(t.statusDetails).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+  const statusBodyHtml = statusRowsHtml || `<tr><td colspan="2" style="color:var(--muted-2);">No status details yet</td></tr>`;
+
+  const actionsHtml = isQueued
+    ? `<button class="ghost" style="width:100%;margin:14px 0 10px;" id="refresh-status-btn">⟳ Refresh Status from Pinelabs</button>
+       <button class="danger" style="width:100%;margin-bottom:20px;" id="cancel-tx-btn">✕ Cancel Transaction</button>`
+    : `<button class="ghost" style="width:100%;margin:14px 0 20px;" id="refresh-status-btn">⟳ Refresh Status from Pinelabs</button>`;
+
+  txContent.innerHTML = `
+    <div class="sub" style="margin-top:2px;">Complete information about this payment transaction</div>
+    ${actionsHtml}
+
+    <div class="detail-block">
+      <div class="detail-kv"><div class="lab">Status</div><div class="val">${statusBadge(t.status)}</div></div>
+    </div>
+    ${!isQueued ? `<div class="detail-block">
+      <div class="detail-kv"><div class="lab">Invoice Number</div><div class="val">${t.invoice}</div></div>
+    </div>` : ''}
+    <div class="detail-block">
+      <div class="detail-kv"><div class="lab">Amount</div><div class="val">${t.amount}</div></div>
+    </div>
+    <div class="detail-block">
+      <div class="detail-kv"><div class="lab">Terminal</div><div class="val">${t.terminal}</div></div>
+    </div>
+
+    <div class="sub" style="margin:18px 0 4px;font-weight:600;color:var(--text);">Pinelabs Transaction Details</div>
+
+    <div class="accordion open" id="tacc-1">
+      <div class="accordion-head" onclick="toggleAccordion('tacc-1')">Transaction Details <span class="chev">⌄</span></div>
+      <div class="accordion-body">
+        <table class="mini-table"><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody>${txRowsHtml}</tbody></table>
+      </div>
+    </div>
+
+    <div class="accordion" id="tacc-2">
+      <div class="accordion-head" onclick="toggleAccordion('tacc-2')">Status <span class="chev">⌄</span></div>
+      <div class="accordion-body">
+        <table class="mini-table"><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody>${statusBodyHtml}</tbody></table>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('refresh-status-btn').addEventListener('click', ()=>{
+    if(isQueued){
+      showToast('Still waiting on Pinelabs — no update yet', 'info-tone');
+    } else {
+      showToast('No status change found', 'info-tone');
+    }
+  });
+
+  const cancelBtn = document.getElementById('cancel-tx-btn');
+  if(cancelBtn){
+    cancelBtn.addEventListener('click', ()=>{
+      t.status = 'Error';
+      t.statusDetails = { 'Response Code':'2', 'Response Message':'TRANSACTION CANCELLED BY USER' };
+      renderTxRows();
+      renderTxDrawer(t);
+      showToast('Transaction cancelled', 'info-tone');
+    });
+  }
+}
+
+function openTxDrawer(i){
+  renderTxDrawer(txData[i]);
+  backdrop.classList.add('show');
+  txDrawer.classList.add('open');
+}
+function closeTxDrawer(){
+  backdrop.classList.remove('show');
+  txDrawer.classList.remove('open');
+}
+document.getElementById('close-tx-drawer').addEventListener('click', closeTxDrawer);
+
+/* filter dropdown */
+const filterToggle = document.getElementById('filter-toggle');
+const filterMenu = document.getElementById('filter-menu');
+filterToggle.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  filterMenu.classList.toggle('show');
+});
+document.addEventListener('click', ()=> filterMenu.classList.remove('show'));
+</script>
 </body>
 </html>
