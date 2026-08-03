@@ -1,6 +1,18 @@
 {
   "features": [
     {
+      "id": "pinelabs",
+      "name": "pinelab payment flows",
+      "description": "pinelab payment flows",
+      "status": "Draft",
+      "dateAdded": "2026-08-03",
+      "path": "features/pinelabs/index.html",
+      "tags": [
+        "pinelabs",
+        "payment"
+      ]
+    },
+    {
       "id": "radiology-sample-views",
       "name": "Radiology Samples",
       "description": "Radiology samples to get some understanding of ohif viewers",
