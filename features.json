@@ -1,6 +1,19 @@
 {
   "features": [
     {
+      "id": "dvdms-e2e",
+      "name": "dvdms integration",
+      "description": "dvdms integration",
+      "status": "Draft",
+      "dateAdded": "2026-08-26",
+      "path": "features/dvdms-e2e/index.html",
+      "tags": [
+        "dvdms",
+        "stock",
+        "eaushahdi"
+      ]
+    },
+    {
       "id": "pinelabs",
       "name": "pinelab payment flows",
       "description": "pinelab payment flows",

@@ -1,0 +1,195 @@
+/* Feature-specific styles */
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: gap 0.2s;
+}
+
+.back-button:hover {
+    gap: 0.75rem;
+}
+
+/* Info Banner */
+.info-banner {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-left: 4px solid var(--warning);
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin: 2rem 0;
+}
+
+.info-banner strong {
+    display: block;
+    font-size: 1.125rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.info-banner p {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Demo Section */
+.demo-section {
+    margin: 3rem 0;
+}
+
+.demo-container {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    margin-top: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.example-component {
+    background: var(--surface);
+    border: 2px dashed var(--border);
+    border-radius: 0.5rem;
+    padding: 2rem;
+    margin-top: 1rem;
+}
+
+.example-component ul {
+    margin: 1rem 0 1.5rem 1.5rem;
+    color: var(--text-secondary);
+}
+
+.example-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #475569;
+}
+
+/* Specifications */
+.specifications {
+    margin: 3rem 0;
+}
+
+.spec-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.spec-card {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.spec-card h3 {
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+}
+
+.spec-card ul {
+    margin-left: 1.5rem;
+    color: var(--text-secondary);
+}
+
+/* Color Palette */
+.color-palette {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.color-sample {
+    width: 100px;
+    height: 80px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: flex-end;
+    padding: 0.5rem;
+    box-shadow: var(--shadow);
+}
+
+.color-sample span {
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Implementation Notes */
+.implementation-notes {
+    margin: 3rem 0;
+}
+
+.notes-content {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.notes-content h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--primary-color);
+}
+
+.notes-content h3:first-child {
+    margin-top: 0;
+}
+
+.notes-content ul {
+    margin-left: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.notes-content li {
+    margin-bottom: 0.5rem;
+}
+
+/* Feedback Section */
+.feedback-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    margin: 3rem 0;
+}
+
+.feedback-section ul {
+    margin-left: 1.5rem;
+    color: var(--text-secondary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .example-buttons {
+        flex-direction: column;
+    }
+
+    .color-palette {
+        justify-content: space-between;
+    }
+
+    .color-sample {
+        flex: 1;
+        min-width: 80px;
+    }
+}
